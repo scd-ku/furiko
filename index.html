@@ -273,10 +273,9 @@ function drawVelocityOverlay(){
   // Circular mass-point origin, centered on the physical bob.
   ctx.beginPath();ctx.arc(ox,oy,8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#222';ctx.lineWidth=2.5;ctx.stroke();
   const lx=Math.min(170,Math.max(65,Math.abs(vx)*16)),ly=Math.min(170,Math.max(65,Math.abs(down)*16));
-  arrow([ox,oy],(vx<-.000001?-1:1)*lx,0,'横 '+Math.abs(vx).toFixed(1)+' km/h','#1463b8','horizontal');
-  // The screen's positive vertical direction is downward. Physical y increases upward;
-  // 'down' = -d(y)/dt, so falling bobs point downward.
-  arrow([ox,oy],0,(down<-.000001?-1:1)*ly,(down<-.000001?'上 ':'下 ')+Math.abs(down).toFixed(1)+' km/h','#c74727','vertical');
+  if(Math.abs(vx)<.0001)textLabel('横 0.0 km/h',ox+22,oy-26,{size:17});else arrow([ox,oy],Math.sign(vx)*lx,0,'横 '+Math.abs(vx).toFixed(1)+' km/h','#1463b8','horizontal');
+  // Physical y is upward-positive; positive downward velocity renders below the bob.
+  if(Math.abs(down)<.0001)textLabel('上下 0.0 km/h',ox+22,oy+25,{size:17});else arrow([ox,oy],0,Math.sign(down)*ly,(down<0?'上 ':'下 ')+Math.abs(down).toFixed(1)+' km/h','#c74727','vertical');
  }
  ctx.restore();
 }
