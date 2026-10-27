@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>振り子実験室 | 理科室3D</title>
+<style>
+:root{--ink:#252525;--green:#555555;--line:#d9d9d9;--sub:#777;--paper:#fff;--brick:#7b4031;--brick2:#6b352a;--mortar:#b99a82}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font:14px/1.55 -apple-system,BlinkMacSystemFont,'Hiragino Sans','Yu Gothic',Meiryo,sans-serif;color:var(--ink);background-color:var(--brick);background-image:linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,var(--brick2) 50%,transparent 50%);background-size:12px 6px,12px 6px,24px 12px;background-position:0 0,0 0,0 6px}button,input,select{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #222;outline-offset:2px}header{height:65px;background:#fff;border-bottom:1px solid #d8d8d8;display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:14px}.logo{width:34px;height:34px;border:1px solid #343434;border-radius:9px;display:grid;place-items:center;font-size:21px;color:#343434}.brand{display:flex;gap:12px;align-items:center}.brand strong{font-size:18px;letter-spacing:.025em}.brand small{display:block;font-size:10px;color:#777;letter-spacing:.08em}.tag{font-size:11px;background:#fff;border:1px solid #cfcfcf;padding:6px 10px;border-radius:20px;color:#333;font-weight:700}
+.app{height:calc(100vh - 65px);min-height:720px;display:grid;grid-template-columns:265px minmax(400px,1fr) 284px;gap:12px;padding:12px;max-width:1920px;margin:auto;background:transparent}.side{overflow-y:auto;display:flex;flex-direction:column;gap:12px;scrollbar-width:thin}.panel{background:#fff;border:1px solid #d8d8d8;border-radius:11px;padding:16px;box-shadow:none}.panel h2{font-size:13px;margin:0 0 16px;letter-spacing:.035em;display:flex;justify-content:space-between;align-items:center}.eyebrow{color:#777777;font-size:9px;letter-spacing:.14em;font-weight:800}.param{padding-bottom:17px;margin-bottom:17px;border-bottom:1px solid #eaeaea}.param:last-child{padding-bottom:0;margin-bottom:0;border-bottom:0}.paramhead{display:flex;justify-content:space-between;align-items:baseline;gap:9px;margin-bottom:11px}.paramhead label{font-weight:700;font-size:12px}.number{display:flex;align-items:baseline;gap:4px}.number input{border:0;border-bottom:1px solid #d0d0d0;background:transparent;text-align:right;color:#303030;width:72px;font-size:20px;font-weight:750;font-variant-numeric:tabular-nums}.number span{font-size:11px;color:#686868;font-weight:600}.range{width:100%;accent-color:var(--green)}.ends{display:flex;justify-content:space-between;font-size:10px;color:#888888}.tip{font-size:11px;color:#737373;margin:9px 0 0;line-height:1.65}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.act,.radioBtns button,.viewbuttons button,.buttonSmall{background:#fff;border:1px solid #262626;border-radius:7px;color:#222;font-weight:800;box-shadow:2px 2px 0 #262626;transition:transform .06s ease,box-shadow .06s ease,background .12s ease,color .12s ease}.act{padding:12px 10px;font-size:12px}.act.primary{background:#fff;color:#222;border-color:#262626}.act:hover,.radioBtns button:hover,.viewbuttons button:hover,.buttonSmall:hover{transform:translate(1px,1px);box-shadow:1px 1px 0 #262626}.act:active,.radioBtns button:active,.viewbuttons button:active,.buttonSmall:active{transform:translate(2px,2px);box-shadow:0 0 0 #262626}.check{display:flex;gap:9px;align-items:center;margin:9px 0;font-size:12px;font-weight:600}.check input{accent-color:#222}.radioBtns{display:grid;grid-template-columns:1fr 1fr;gap:7px}.radioBtns button{padding:9px 5px;font-size:11px}.radioBtns button.active,.viewbuttons button.active{background:#222;color:#fff;border-color:#222}.buttonSmall{padding:6px 9px;font-size:11px}
+.stage{position:relative;overflow:hidden;border:1px solid #d6d6d2;border-radius:11px;background:#fff}#gl{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#gl:active{cursor:grabbing}.stageOverlay{position:absolute;z-index:2;pointer-events:none}.upperLeft{top:14px;left:14px;background:#fff;border:1px solid #cfcfcf;border-radius:8px;padding:10px 13px;box-shadow:none}.upperLeft b{display:block;font-size:12px}.upperLeft small{display:block;font-size:10px;color:#777}.viewbuttons{position:absolute;z-index:4;right:12px;top:12px;display:flex;gap:7px;background:#fff;border:1px solid #cfcfcf;padding:7px;border-radius:8px;box-shadow:none}.viewbuttons button{padding:7px 10px;font-size:11px}.lowerLeft{bottom:12px;left:13px;font-size:10px;background:#fff;color:#555;border:1px solid #cfcfcf;border-radius:8px;padding:8px 11px;box-shadow:none}.lowerRight{bottom:12px;right:13px;font-size:11px;background:#fff;color:#222;border:1px solid #cfcfcf;border-radius:8px;padding:9px 12px;box-shadow:none}.lowerRight b{font-size:17px;margin-left:8px}.statusGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.stat{background:#fff;border:1px solid #dedede;border-radius:8px;padding:11px;box-shadow:none}.stat label{font-size:10px;color:#777;display:block}.stat strong{font-size:23px;color:#303030;font-variant-numeric:tabular-nums}.stat small{font-size:11px;color:#777;margin-left:3px}.chartbox{border:1px solid #dedede;border-radius:8px;padding:4px;background:#fff;box-shadow:none}#graph{display:block;width:100%;height:218px}.details{font-size:11px;color:#777777;line-height:1.8}.details strong{color:#444444}.callout{padding:10px;background:#f6f6f6;border-radius:8px;font-size:11px;line-height:1.75;color:#666666}.status{font-size:11px;color:#555555;font-weight:700}.footer{font-size:10px;color:#888888;text-align:center;padding:8px}.error{display:none;position:absolute;inset:0;background:#ffffff;padding:50px 20px;line-height:2;z-index:10}
+@media(max-width:1200px){.app{grid-template-columns:234px minmax(350px,1fr) 252px;gap:8px;padding:8px}.panel{padding:12px}.stat strong{font-size:18px}}@media(max-width:920px){.app{display:grid;grid-template-columns:1fr 1fr;height:auto;min-height:0}.stage{grid-column:1/-1;grid-row:1;height:65vh;min-height:500px}.side{overflow:visible}.side.left{grid-column:1}.side.right{grid-column:2}}@media(max-width:580px){header{padding:0 10px}.brand strong{font-size:14px}.tag{display:none}.app{display:flex;flex-direction:column}.stage{height:65vh;min-height:460px;order:0}.side.left{order:1}.side.right{order:2}.viewbuttons{top:69px}.upperLeft{font-size:10px}}
+
+.mini-frame{position:absolute;z-index:3;right:15px;top:69px;width:clamp(150px,28%,245px);aspect-ratio:1.5;border:1px solid #555;border-radius:5px;pointer-events:none;background:transparent;overflow:hidden;box-shadow:none}
+.mini-frame span{position:absolute;top:4px;left:5px;background:#fffffff2;color:#303030;font-size:11px;padding:1px 5px;border-radius:2px}
+.mini-frame[hidden]{display:none}
+
+/* Header-only controls, dialog panels have no decorative shadow */
+.headerEnd{display:flex;align-items:center;gap:16px}.logo{background:#fff;border:1px solid #333;cursor:pointer;padding:3px;border-radius:6px;box-shadow:2px 2px 0 #333;flex:none}.logo:hover,.helpTrigger:hover{transform:translate(1px,1px);box-shadow:1px 1px 0 #333}.helpTrigger{background:white;color:#222;border:1px solid #222;box-shadow:2px 2px 0 #333;border-radius:6px;font-weight:750;padding:8px 14px;cursor:pointer}
+.dialogLayer[hidden]{display:none}.dialogLayer{position:fixed;inset:0;background:#0009;z-index:100;display:grid;place-items:center;padding:18px}.dialogBox{background:#fff;color:#252525;border:1px solid #777;border-radius:10px;padding:22px;max-width:760px;width:min(100%,760px);max-height:90vh;overflow:auto;box-shadow:none}.dialogTop{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}.dialogTop h2{margin:0;font-size:19px}.dialogClose{background:white;color:#222;border:1px solid #222;box-shadow:2px 2px 0 #222;padding:5px 10px;border-radius:5px;cursor:pointer}.qrBox{text-align:center;max-width:430px}.qrBox img{display:block;margin:12px auto;max-width:100%;width:240px;height:240px;image-rendering:pixelated}.qrBox a,.dialogBox a{color:#333;overflow-wrap:anywhere}.helpBody h3{font-size:15px;margin:23px 0 6px;border-bottom:1px solid #ddd;padding-bottom:5px}.helpBody p,.helpBody li{line-height:1.8}.helpBody ul{padding-left:1.3em}.equation{margin:13px 0;padding:12px 10px;background:#f7f7f7;text-align:center;overflow-x:auto}.equation math{font-size:1.14em;white-space:nowrap}.note{font-size:12px;color:#666}.dialogBox button:focus-visible{outline:3px solid #777}
+@media(max-width:700px){.headerEnd .tag{display:none}.dialogBox{padding:14px}.equation math{font-size:1em}}
+</style>
+</head>
+<body>
+<header><div class="brand"><button class="logo" id="qrOpen" type="button" aria-label="QRコードを表示" title="公開URLのQRコード"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm10-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg></button><div><strong>振り子の実験室</strong><small>SCIENCE LAB · INTERACTIVE 3D</small></div></div><div class="headerEnd"><span class="tag">単振り子・二重振り子の3Dシミュレーション</span><button class="helpTrigger" id="helpOpen" type="button">? ヘルプ</button></div></header>
+<main class="app">
+<aside class="side left">
+<section class="panel"><h2>実験条件 <span class="eyebrow">PARAMETERS</span></h2>
+<div class="param"><div class="paramhead"><label for="length">振り子の長さ L</label><div class="number"><input id="lengthNum" type="number" min="0.15" max="1000" step="0.01" value="0.65"><span>m</span></div></div><input id="length" class="range" type="range" min="0.15" max="1000" step="0.01" value="0.65"><div class="ends"><span>0.15 m</span><span>1000.00 m</span></div><p class="tip">支点からおもりの重心まで。おもりが机や台座にぶつからないよう、支柱は自動で上昇し、最大約1000mまで伸長します。</p></div>
+<div class="param"><div class="paramhead"><label for="mass">おもりの質量 m</label><div class="number"><input id="massNum" type="number" min="20" max="1000" step="10" value="200"><span>g</span></div></div><input id="mass" class="range" type="range" min="20" max="1000" step="10" value="200"><div class="ends"><span>20 g</span><span>1000 g</span></div></div>
+<div class="param"><div class="paramhead"><label for="angle">初期角度 θ₀</label><div class="number"><input id="angleNum" type="number" min="0" max="80" step="1" value="25"><span>°</span></div></div><input id="angle" class="range" type="range" min="0" max="80" step="1" value="25"><div class="ends"><span>0°</span><span>80°</span></div></div>
+<div class="param" style="padding-top:4px"><label class="check"><input type="checkbox" id="doubleEnabled">2つ目の振り子を取り付ける</label><div id="secondParams" hidden><div class="paramhead"><label for="length2">2本目の紐の長さ L₂</label><div class="number"><input id="length2Num" type="number" min="0.05" max="999" step="0.01" value="0.35"><span>m</span></div></div><input id="length2" class="range" type="range" min="0.05" max="999" step="0.01" value="0.35"><div class="paramhead"><label for="mass2">2つ目のおもりの質量 m₂</label><div class="number"><input id="mass2Num" type="number" min="20" max="1000" step="10" value="100"><span>g</span></div></div><input id="mass2" class="range" type="range" min="20" max="1000" step="10" value="100"><div class="paramhead"><label for="angle2">2本目の初期角度 θ₂</label><div class="number"><input id="angle2Num" type="number" min="-80" max="80" step="1" value="-15"><span>°</span></div></div><input id="angle2" class="range" type="range" min="-80" max="80" step="1" value="-15"><p class="tip" id="limitInfo">支柱の高さ1000mまで自動伸長。2本の長さと球の半径を考慮して制限します。</p></div></div><div class="actions"><button id="start" class="act primary">▶ 開始</button><button id="reset" class="act">↺ リセット</button></div></section>
+<section class="panel"><h2>表示設定 <span class="eyebrow">DISPLAY</span></h2>
+<label class="check"><input id="trajectory" type="checkbox" checked>振れ幅の軌跡</label>
+<label class="check"><input id="angleArc" type="checkbox" checked>角度のガイド線</label>
+<label class="check"><input id="roomToggle" type="checkbox" checked>理科室を表示</label>
+<div style="margin:14px 0 7px;font-size:11px;font-weight:700">分度器の形式</div><div class="radioBtns"><button id="bluePlate">青色 ±30°</button><button id="fullPlate" class="active">180°半円</button></div><p class="tip">180°半円と青色±30°の表示を切り替えます。</p></section>
+<section class="panel"><h2>実験上の注意</h2><div class="callout">長さを長くすると、おもりが机や台座に接触しないよう支柱が自動で上昇します。理科室の天井高は3.0mを基準にし、支柱がそれを超えると上空を青空表示に切り替えます。支柱側の定規は回転軸側を0として表示します。</div></section>
+
+</aside>
+<section class="stage"><div id="miniFrame" class="mini-frame" hidden><canvas id="miniFallback" style="width:100%;height:100%;display:none"></canvas><span>実験台｜初期視点</span></div><canvas id="gl" aria-label="3D理科室の振り子実験"></canvas><canvas id="labels" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas><div id="webglError" class="error">このブラウザでは3D描画が使えません。Chrome または Safari の WebGL 対応環境で開いてください。</div>
+<div class="stageOverlay upperLeft"><b>理科室｜対面型実験台</b><small>振り子・理科室は学習用の3Dモデルです</small></div>
+<div class="viewbuttons"><button data-view="front" class="active">正面</button><button data-view="diagonal">斜め</button><button data-view="top">俯瞰</button><button data-view="room">理科室</button></div>
+<div class="stageOverlay lowerLeft">初期視点：着席視点　｜　ドラッグ：視点回転　｜　Shift+ドラッグ / 右ドラッグ：平行移動　｜　ホイール：拡大・縮小</div><div class="stageOverlay lowerRight">現在角度 <b id="thetaLive">+25.0°</b></div></section>
+<aside class="side right"><section class="panel"><h2>測定値 <span id="status" class="status">停止中</span></h2><div class="statusGrid"><div class="stat"><label>角度 θ</label><strong id="thetaRead">+25.0</strong><small>°</small></div><div class="stat"><label>経過時間</label><strong id="timeRead">0.00</strong><small>s</small></div><div class="stat"><label>周期 T</label><strong id="periodRead">1.65</strong><small>s</small></div><div class="stat"><label>振動数 f</label><strong id="frequencyRead">0.61</strong><small>Hz</small></div></div></section>
+<section class="panel"><h2>運動のグラフ <select id="graphMode" class="buttonSmall"><option value="angle">角度 − 時間</option><option value="speed">角速度 − 時間</option><option value="energy">全力学的エネルギー</option><option value="path">水平位置 − 時間</option></select></h2><div class="chartbox"><canvas id="graph"></canvas></div><div style="text-align:right;margin-top:9px"><button id="csv" class="buttonSmall">CSVで測定値を保存</button></div></section>
+<section class="panel"><h2>振り子の運動</h2><div class="details">大きく振っても計算できる<strong>非線形運動方程式</strong>を数値積分しています。<p style="font:16px Georgia,serif;text-align:center;margin:9px 0">d²θ/dt² = −(g/L) sin θ</p>単振り子と二重振り子を切替可能です。二重振り子では質量・長さ・初期角度によって連成運動が変化し、一般に周期は一定になりません。</div></section><div class="footer">Science Communication Design Laboratory · Kagawa University</div></aside>
+</main>
+<div class="dialogLayer" id="qrDialog" hidden role="dialog" aria-modal="true" aria-labelledby="qrTitle"><div class="dialogBox qrBox"><div class="dialogTop"><h2 id="qrTitle">アプリのQRコード</h2><button class="dialogClose" data-dismiss="qrDialog">閉じる ×</button></div><img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=12&data=https%3A%2F%2Fscd-ku.github.io%2Ffuriko%2F" alt="https://scd-ku.github.io/furiko/ のQRコード" /><p><a href="https://scd-ku.github.io/furiko/" target="_blank" rel="noopener">https://scd-ku.github.io/furiko/</a></p><p class="note">QRコードの取得にはインターネット接続が必要です。</p></div></div>
+<div class="dialogLayer" id="helpDialog" hidden role="dialog" aria-modal="true" aria-labelledby="helpTitle"><div class="dialogBox"><div class="dialogTop"><h2 id="helpTitle">振り子の実験室｜ヘルプ</h2><button class="dialogClose" data-dismiss="helpDialog">閉じる ×</button></div><div class="helpBody"><h3>本アプリでできること</h3><p>理科室に置いた実験器を3Dで観察し、単振り子または二重振り子の運動を比較できます。紐の長さ、錘の質量、初期角度、表示視点を調整できます。角度や角速度、位置のグラフを表示し、測定値をCSVに保存できます。</p><h3>使い方</h3><ul><li>左側で紐の長さ、質量、初期角度を設定し、［開始］で運動を再生します。</li><li>［2つ目の振り子を取り付ける］をオンにすると、二重振り子に切り替わります。</li><li>マウスドラッグで視点回転、Shift＋ドラッグまたは右ドラッグで平行移動、ホイールで拡大・縮小します。</li><li>支柱を長くすると視点外の様子を確認するための小画面が表示されます。</li></ul><h3>単振り子の運動方程式</h3><div class="equation"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mfrac><mrow><msup><mi>d</mi><mn>2</mn></msup><mi>θ</mi></mrow><mrow><mi>d</mi><msup><mi>t</mi><mn>2</mn></msup></mrow></mfrac><mo>+</mo><mfrac><mi>g</mi><mi>L</mi></mfrac><mi>sin</mi><mo>⁡</mo><mi>θ</mi><mo>=</mo><mn>0</mn></math></div><p>θは鉛直下向きからの角度、Lは支点から錘の重心までの長さ、gは重力加速度、tは時間です。理想的な単振り子の運動は錘の質量に依存しません。</p><h3>二重振り子の運動方程式</h3><p>2つの角度 θ₁、θ₂ は鉛直下向きから測り、Δ = θ₁ − θ₂ とします。質量を m₁、m₂、長さを L₁、L₂ とすると、質点と質量のない剛体紐を仮定した連成方程式は次のようになります。</p><div class="equation"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><mo>(</mo><msub><mi>m</mi><mn>1</mn></msub><mo>+</mo><msub><mi>m</mi><mn>2</mn></msub><mo>)</mo><msubsup><mi>L</mi><mn>1</mn><mn>2</mn></msubsup><msub><mover><mi>θ</mi><mo>¨</mo></mover><mn>1</mn></msub><mo>+</mo><msub><mi>m</mi><mn>2</mn></msub><msub><mi>L</mi><mn>1</mn></msub><msub><mi>L</mi><mn>2</mn></msub><mi>cos</mi><mo>⁡</mo><mi>Δ</mi><msub><mover><mi>θ</mi><mo>¨</mo></mover><mn>2</mn></msub><mo>+</mo><msub><mi>m</mi><mn>2</mn></msub><msub><mi>L</mi><mn>1</mn></msub><msub><mi>L</mi><mn>2</mn></msub><mi>sin</mi><mo>⁡</mo><mi>Δ</mi><msubsup><mover><mi>θ</mi><mo>˙</mo></mover><mn>2</mn><mn>2</mn></msubsup><mo>+</mo><mo>(</mo><msub><mi>m</mi><mn>1</mn></msub><mo>+</mo><msub><mi>m</mi><mn>2</mn></msub><mo>)</mo><mi>g</mi><msub><mi>L</mi><mn>1</mn></msub><mi>sin</mi><mo>⁡</mo><msub><mi>θ</mi><mn>1</mn></msub><mo>=</mo><mn>0</mn></mrow></math></div><div class="equation"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><mrow><msub><mi>m</mi><mn>2</mn></msub><msubsup><mi>L</mi><mn>2</mn><mn>2</mn></msubsup><msub><mover><mi>θ</mi><mo>¨</mo></mover><mn>2</mn></msub><mo>+</mo><msub><mi>m</mi><mn>2</mn></msub><msub><mi>L</mi><mn>1</mn></msub><msub><mi>L</mi><mn>2</mn></msub><mi>cos</mi><mo>⁡</mo><mi>Δ</mi><msub><mover><mi>θ</mi><mo>¨</mo></mover><mn>1</mn></msub><mo>−</mo><msub><mi>m</mi><mn>2</mn></msub><msub><mi>L</mi><mn>1</mn></msub><msub><mi>L</mi><mn>2</mn></msub><mi>sin</mi><mo>⁡</mo><mi>Δ</mi><msubsup><mover><mi>θ</mi><mo>˙</mo></mover><mn>1</mn><mn>2</mn></msubsup><mo>+</mo><msub><mi>m</mi><mn>2</mn></msub><mi>g</mi><msub><mi>L</mi><mn>2</mn></msub><mi>sin</mi><mo>⁡</mo><msub><mi>θ</mi><mn>2</mn></msub><mo>=</mo><mn>0</mn></mrow></math></div><p>ドットは時間微分を示します。これらを数値的に解いて運動を描画します。二重振り子では初期条件のわずかな違いが大きな差につながる場合があります。</p><h3>注意点・限界</h3><ul><li>空気抵抗、支点摩擦、糸の伸び、紐や錘の回転慣性、実験器のたわみは考慮していません。</li><li>長大な支柱、空・草原・遠方の建造物は概念的な比較表示です。現実の教室や建造物の設置位置を再現するものではありません。</li><li>100m以上での紐・錘の拡大は視認性を確保するための表示補正で、実物の大きさや運動方程式を変更しません。</li><li>台座との接触回避は幾何学的な概算です。紐同士や装置への衝突を含む完全な接触シミュレーションではありません。</li><li>実物実験器の寸法や特定メーカーの性能を保証するものではなく、実測・教材制作の代替にはなりません。</li></ul></div></div></div>
+<script>
+(()=>{'use strict';
+// Modal dialogs are intentionally separate from the physical simulation.
+for(const [buttonId,dialogId] of [['qrOpen','qrDialog'],['helpOpen','helpDialog']])document.getElementById(buttonId).addEventListener('click',()=>{document.getElementById(dialogId).hidden=false;});
+document.querySelectorAll('[data-dismiss]').forEach(btn=>btn.addEventListener('click',()=>{document.getElementById(btn.dataset.dismiss).hidden=true}));
+document.querySelectorAll('.dialogLayer').forEach(layer=>layer.addEventListener('click',e=>{if(e.target===layer)layer.hidden=true}));document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.dialogLayer').forEach(d=>d.hidden=true)});
+
+const $=id=>document.getElementById(id), clamp=(x,a,b)=>Math.max(a,Math.min(b,x)), PI=Math.PI, RAD=PI/180;
+const glCanvas=$('gl'), labelCanvas=$('labels'), graph=$('graph');const gl=glCanvas.getContext('webgl2',{antialias:true,alpha:false,depth:true});const canvas2d=gl?null:glCanvas.getContext('2d');
+const vsrc=`#version 300 es
+in vec3 aP;in vec3 aN;in vec3 aC;uniform mat4 uVP;out vec3 vC;out vec3 vN;out vec3 vPos;void main(){gl_Position=uVP*vec4(aP,1.0);vC=aC;vN=aN;vPos=aP;}`;
+const fsrc=`#version 300 es
+precision highp float;in vec3 vC;in vec3 vN;in vec3 vPos;out vec4 outColor;void main(){vec3 n=normalize(vN);float s=0.61+0.34*max(0.,dot(n,normalize(vec3(-.4,.9,1.0))));float skylight=.07*max(0.,n.y);outColor=vec4(mix(vC*(s+skylight),vec3(1.0),step(0.995,min(min(vC.r,vC.g),vC.b))),1.);}`;
+function shader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s}
+let prog,pLoc,nLoc,cLoc,vpLoc; if(gl){prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,vsrc));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,fsrc));gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));gl.useProgram(prog);pLoc=gl.getAttribLocation(prog,'aP');nLoc=gl.getAttribLocation(prog,'aN');cLoc=gl.getAttribLocation(prog,'aC');vpLoc=gl.getUniformLocation(prog,'uVP');}
+const staticBuf=gl?gl.createBuffer():'static',dynamicBuf=gl?gl.createBuffer():'dynamic',roomBuf=gl?gl.createBuffer():'room';let staticCount=0,roomCount=0,dynamicCount=0;const fallbackMeshes=new Map();
+const color=(h)=>{if(Array.isArray(h))return h;const n=parseInt(h.replace('#',''),16);return[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]};
+const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],mul=(a,k)=>a.map(v=>v*k),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],len=a=>Math.hypot(...a),norm=a=>mul(a,1/(len(a)||1));
+let mesh=[];
+function vert(p,n,c){mesh.push(...p,...n,...color(c))}
+function tri(a,b,c,col,normal){let n=normal||norm(cross(sub(b,a),sub(c,a)));vert(a,n,col);vert(b,n,col);vert(c,n,col)}
+function quad(a,b,c,d,col){let n=norm(cross(sub(b,a),sub(c,a)));tri(a,b,c,col,n);tri(a,c,d,col,n)}
+function box(x,y,z,sx,sy,sz,col){let X=sx/2,Y=sy/2,Z=sz/2;let a=[x-X,y-Y,z-Z],b=[x+X,y-Y,z-Z],c=[x+X,y+Y,z-Z],d=[x-X,y+Y,z-Z],e=[x-X,y-Y,z+Z],f=[x+X,y-Y,z+Z],g=[x+X,y+Y,z+Z],h=[x-X,y+Y,z+Z];quad(e,f,g,h,col);quad(b,a,d,c,col);quad(a,e,h,d,col);quad(f,b,c,g,col);quad(d,h,g,c,col);quad(a,b,f,e,col)}
+function cyl(a,b,r,col,steps=12,r2=r){let axis=norm(sub(b,a));let v=norm(cross(Math.abs(axis[1])>.9?[1,0,0]:[0,1,0],axis)),w=norm(cross(axis,v));for(let i=0;i<steps;i++){let t=i*2*PI/steps,s=(i+1)*2*PI/steps;let u=add(mul(v,Math.cos(t)),mul(w,Math.sin(t))),p=add(mul(v,Math.cos(s)),mul(w,Math.sin(s)));let a1=add(a,mul(u,r)),a2=add(a,mul(p,r)),b1=add(b,mul(u,r2)),b2=add(b,mul(p,r2));quad(a1,a2,b2,b1,col);tri(a,a2,a1,col,mul(axis,-1));tri(b,b1,b2,col,axis)}}
+function ball(c,r,col,lat=10,lon=16){for(let i=0;i<lat;i++){let v=i*PI/lat,v2=(i+1)*PI/lat;for(let j=0;j<lon;j++){let u=j*2*PI/lon,u2=(j+1)*2*PI/lon;function p(v,u){return[c[0]+r*Math.sin(v)*Math.cos(u),c[1]+r*Math.cos(v),c[2]+r*Math.sin(v)*Math.sin(u)]}let a=p(v,u),b=p(v2,u),d=p(v,u2),e=p(v2,u2);tri(a,b,e,col,norm(sub(add(add(a,b),e),mul(c,3))));tri(a,e,d,col,norm(sub(add(add(a,e),d),mul(c,3))))}}}
+function line(a,b,r,col){cyl(a,b,r,col,7)}
+function lathe(center,profile,col){const n=18;for(let i=0;i<profile.length-1;i++)for(let j=0;j<n;j++){
+ const [h0,r0]=profile[i],[h1,r1]=profile[i+1],a=j*2*PI/n,b=(j+1)*2*PI/n;
+ let p=[center[0]+r0*Math.cos(a),center[1]+h0,center[2]+r0*Math.sin(a)],q=[center[0]+r0*Math.cos(b),center[1]+h0,center[2]+r0*Math.sin(b)],r=[center[0]+r1*Math.cos(b),center[1]+h1,center[2]+r1*Math.sin(b)],t=[center[0]+r1*Math.cos(a),center[1]+h1,center[2]+r1*Math.sin(a)];quad(p,q,r,t,col)
+}}
+function plateSector(cx,cy,cz,R,maxDeg,col){let N=50,t=.009;for(let s of [cz-t,cz+t]){for(let i=0;i<N;i++){const p=anglePoint(cx,cy,s,R,(-maxDeg+2*maxDeg*i/N)*RAD),q=anglePoint(cx,cy,s,R,(-maxDeg+2*maxDeg*(i+1)/N)*RAD);tri([cx,cy,s],p,q,col)}}for(let i=0;i<N;i++){let p=anglePoint(cx,cy,cz-t,R,(-maxDeg+2*maxDeg*i/N)*RAD),q=anglePoint(cx,cy,cz-t,R,(-maxDeg+2*maxDeg*(i+1)/N)*RAD),rr=[q[0],q[1],cz+t],ss=[p[0],p[1],cz+t];quad(p,q,rr,ss,col)}}
+function anglePoint(cx,cy,z,R,a){return[cx+R*Math.sin(a),cy-R*Math.cos(a),z]}
+function upload(buffer){const data=new Float32Array(mesh);if(gl){gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW)}else fallbackMeshes.set(buffer,data);return mesh.length/9}
+function drawBuffer(buffer,count){if(!gl)return;gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.enableVertexAttribArray(pLoc);gl.enableVertexAttribArray(nLoc);gl.enableVertexAttribArray(cLoc);gl.vertexAttribPointer(pLoc,3,gl.FLOAT,false,36,0);gl.vertexAttribPointer(nLoc,3,gl.FLOAT,false,36,12);gl.vertexAttribPointer(cLoc,3,gl.FLOAT,false,36,24);gl.drawArrays(gl.TRIANGLES,0,count)}
+function labTable(x,z,primary=false){const y=.76;box(x,y-.025,z,1.80,.05,.90,'#262b2b');box(x,y-.052,z,1.84,.024,.92,'#393e3d');box(x,y-.385,z,.99,.69,.67,'#e1e5df');box(x,y-.68,z,1.04,.11,.70,'#666d6a');
+// two-faced undercounter cabinet/access hatches
+for(const side of [-1,1]){box(x,y-.34,z+side*.348,.76,.46,.015,'#d1dad1');box(x+.39,y-.34,z+side*.359,.012,.42,.016,'#a6ada9');}
+// inset sink at far-right, like a school counter; white sink rim and flat faucet
+box(x+.63,y+.004,z,.23,.01,.24,'#636969');box(x+.63,y+.011,z,.19,.01,.20,'#111918');cyl([x+.71,y,z+.06],[x+.71,y+.14,z+.06],.013,'#b9c5c4');cyl([x+.71,y+.14,z+.06],[x+.65,y+.14,z+.06],.012,'#b9c5c4');
+if(primary){for(let side of [-1,1]){box(x-.38,y-.205,z+side*.27,.18,.08,.04,'#d6dcd7');}}
+}
+function stool(x,z){cyl([x,.52,z],[x,.55,z],.19,'#9e7855',18);for(const [a,b] of [[-.14,-.14],[.14,-.14],[-.14,.14],[.14,.14]])cyl([x+a,.02,z+b],[x+a*.70,.515,z+b*.70],.015,'#a4afac',8)}
+const ROOM_CEILING_Y=3.0;
+function bobRadius(){let r=.038*Math.cbrt(s.m/200);return clamp(r,.023,.076)}
+function roomNeedsOpenSky(){return apparatusMetrics().topY>.97*ROOM_CEILING_Y}
+function buildRoom(){mesh=[];let floorY=-.018;const ceilingY=ROOM_CEILING_Y, openSky=roomNeedsOpenSky();
+if(openSky){
+ // broad green terrain around the school, horizon visible above the classroom
+ box(0,-.38,-650,3000,.52,3000,'#8cab73');
+ for(let k=0;k<100;k++){const x=((k*137)%1840)-920,z=-80-((k*229)%1150);box(x,-.105,z,5+(k%5)*3,.09,3+(k%7)*2,k%3===0?'#9fc17d':'#82a966')}
+ // Distant atmospheric landmarks: Tokyo Tower 333m and Tokyo Skytree 634m, not the same campus.
+ const haze='#a7b9c4',haze2='#c5d2d8';
+ const tx=-480,tz=-1030;
+ // Tokyo Tower lattice silhouette and tapered red/white shaft
+ for(let i=0;i<18;i++){const y0=i*18.3,y1=(i+1)*18.3,w0=26*(1-y0/470)+2,w1=26*(1-y1/470)+2;const col=i%4<2?'#b8a4a1':haze2;
+  for(const sign of [-1,1]){line([tx+sign*w0,y0,tz],[tx+sign*w1,y1,tz],1.6,col);if(i%2===0)line([tx-sign*w0,y0,tz],[tx+sign*w1,y1,tz],.8,haze2)}
+  if(i%3===0)line([tx-w0,y0,tz],[tx+w0,y0,tz],1.2,haze2);
+ }
+ line([tx,328,tz],[tx,345,tz],1.9,haze);box(tx,146,tz,53,4,25,haze2);box(tx,250,tz,24,3,12,haze2);
+ const sx=490,sz=-1230;
+ // Skytree: three-legged taper, observation decks, tall antenna
+ for(let i=0;i<27;i++){let y0=i*20,y1=(i+1)*20,r0=Math.max(3,23-y0*.037),r1=Math.max(3,23-y1*.037);for(let j=0;j<3;j++){let a=j*Math.PI*2/3;line([sx+Math.cos(a)*r0,y0,sz+Math.sin(a)*r0],[sx+Math.cos(a)*r1,y1,sz+Math.sin(a)*r1],1.1,haze);}}
+ cyl([sx,455,sz],[sx,634,sz],2.3,haze,10);cyl([sx,335,sz],[sx,355,sz],19,haze2,20);cyl([sx,440,sz],[sx,453,sz],13,haze2,20);
+ // light clouds at about 1000m, deliberately spaced away from instrument column
+ for(let k=0;k<7;k++){const cx=-750+k*245,cz=-440-(k%3)*240,cy=960+(k%4)*35;
+  for(let j=0;j<4;j++)ball([cx+(j-1.5)*27,cy+(j%2)*8,cz],27+(j%3)*10,'#edf2f5',7,12);
+ }
+}
+
+box(0,floorY-.07,-1.5,16,.14,18,'#ffffff');for(let x=-7.5;x<=7.5;x+=.5)line([x,floorY+.003,-10],[x,floorY+.003,7],.002,'#e5e5e5');for(let z=-10;z<=7;z+=.5)line([-8,floorY+.003,z],[8,floorY+.003,z],.002,'#e5e5e5');
+// walls leave front open; ceiling follows the standard 3.0m classroom reference height
+box(0,ceilingY/2,-9.25,16,ceilingY,.14,'#ffffff');box(-8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');box(8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');
+// windows
+for(const z of [-6.7,-3.8,-.9,2.0]){ box(-7.88,2.02,z,.19,1.7,2.45,'#ffffff');box(-7.775,2.02,z,.038,1.54,2.24,'#b7d9e2'); box(-7.738,2.02,z,.055,.06,2.29,'#ffffff');box(-7.738,2.02,z,.055,1.6,.055,'#ffffff'); box(-7.738,1.23,z,.065,.055,2.29,'#ffffff'); }
+// front blackboard and rail
+box(-2.2,1.75,-9.13,4.8,1.4,.045,'#325b4c');box(-2.2,1.02,-9.04,4.9,.045,.13,'#b8b8b8');box(-2.2,1.75,-9.09,4.89,1.5,.025,'#c5c5c5');box(-2.2,1.75,-9.04,4.73,1.37,.026,'#32564a');
+// cupboard and right windows
+box(3.7,1.82,-9.09,2.25,1.26,.075,'#ffffff');box(3.7,1.82,-9.035,2.08,1.10,.025,'#ffffff');
+for(const z of [-6.5,-3.7,-.9,1.9]){box(7.88,2.0,z,.18,1.65,2.35,'#ffffff');box(7.775,2.0,z,.035,1.48,2.16,'#bdd5dc');box(7.74,2.0,z,.07,1.55,.07,'#ffffff');box(7.74,2.0,z,.07,.07,2.2,'#ffffff');}
+for(const x of [-6.85,6.85]){box(x,1.11,-8.35,1.15,2.15,.48,'#ffffff');for(let j=0;j<3;j++){box(x,1.8-j*.58,-8.04,1.03,.018,.02,'#b3b3b3')}box(x,2.19,-8.04,1.05,.028,.026,'#aaaaaa');}
+if(!openSky){box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7'); for(const z of [-6,-2.5,1,4.5])for(const x of [-3.6,0,3.6]){box(x,ceilingY-.12,z,.24,.04,1.5,'#eeeeee');box(x,ceilingY-.16,z,.18,.03,1.39,'#ffffff')}}
+for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
+box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
+roomCount=upload(roomBuf)}
+const s={L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,angleArc:true,room:true,blue:false};
+let pivot=[.02,1.95,.19],plateZ=.04,bob=[0,0,0], camera={yaw:0,pitch:.13,dist:2.05,tx:0,ty:1.08,tz:0},cursorTarget=null,currentView='front',dirty=true;
+function rebuildStatic(){mesh=[];labTable(0,0,true); // main experimental island
+ const M=apparatusMetrics(), ty=M.baseTop, ext=M.ext;
+ const supportX=0, supportZ=-.072, scaleX=.006, scaleZ=-.022;
+ // apparatus base: 240 x 170 mm metal base with black corner caps
+ box(0,ty+.000,0,.24,.028,.17,'#d9dfdc');
+ box(0,ty+.026,0,.236,.010,.166,'#eef2ef');
+ for(const [x,z] of [[-.102,-.067],[.102,-.067],[-.102,.067],[.102,.067]]) box(x,ty-.004,z,.024,.008,.024,'#3f4547');
+ // support rod: centered on the long side and placed toward the blackboard-side back edge
+ cyl([supportX,ty+.034,supportZ],[supportX,ty+.642,supportZ],.0115,'#aeb9b8',16);
+ if(ext>.001){cyl([supportX,ty+.618,supportZ],[supportX,ty+.642+ext,supportZ],.0165,'#d9e3e1',16);cyl([supportX,ty+.612,supportZ],[supportX,ty+.638,supportZ],.022,'#8e9a9a',16)}
+ // lower clamp on the support rod
+ cyl([supportX,ty+.362,supportZ],[supportX,ty+.388,supportZ],.021,'#6c7477',16); box(supportX+.020,ty+.375,supportZ,.030,.010,.016,'#7a8386');
+ // upper clamp and head around the support rod
+ cyl([supportX,ty+.626+ext,supportZ],[supportX,ty+.654+ext,supportZ],.023,'#70797c',18);
+ // vertical collar and head pieces that directly meet the beam (no visible gap)
+ box(supportX,ty+.675+ext,supportZ,.060,.070,.056,'#bcc4c6');
+ box(supportX,ty+.715+ext,supportZ,.074,.018,.064,'#555d60');
+ // arm from support rod forward to the pendulum pivot
+ box(supportX,ty+.708+ext,.014,.034,.022,.188,'#8f989b');
+ box(supportX,ty+.698+ext,.073,.040,.032,.054,'#c7cdcf');
+ // centered hanger so the beam, pivot axis and protractor are visibly connected
+ const py=M.pivotY; pivot=[M.pivotX,py,M.pivotZ]; plateZ=M.pivotZ;
+ box(pivot[0],py+.060,pivot[2]-.004,.008,.140,.022,'#f0f1ef');
+ // connector plate tying the hanger into the beam underside
+ box(pivot[0],py+.124,pivot[2]-.002,.018,.014,.032,'#d7ddde');
+ cyl([pivot[0],py,pivot[2]-.014],[pivot[0],py,pivot[2]+.014],.0095,'#8a9495',12);
+ ball([pivot[0],py,pivot[2]+.016],.011,'#dde4e2');
+ // flat ruler / scale positioned just to the right of the support axis (front view)
+ line([scaleX,ty+.042,scaleZ],[scaleX,ty+.642+ext,scaleZ],.0021,'#f1f3f1');
+ line([scaleX+.006,ty+.042,scaleZ+.002],[scaleX+.006,ty+.642+ext,scaleZ+.002],.0011,'#9ea8a8');
+ const scaleSpan=.6+ext; let tickStep=scaleSpan<=2?.01:scaleSpan<=20?.1:scaleSpan<=200?1:10; let majorStep=scaleSpan<=2?.1:scaleSpan<=20?1:scaleSpan<=200?10:100; let midStep=majorStep/2; for(let d=0; d<=scaleSpan+1e-9; d+=tickStep){ let y=(M.pivotY-d); if(y<ty+.042-1e-6) break; let major=Math.abs((d/majorStep)-Math.round(d/majorStep))<1e-6; let mid=Math.abs((d/midStep)-Math.round(d/midStep))<1e-6; let len=major?.028:mid?.020:.012; line([scaleX,y,scaleZ+.006],[scaleX+len,y,scaleZ+.006], major?.0018:.0012, major?'#c95e66':'#b8c2bf'); }
+ // semi-circular protractor centred on pivot plane
+ const R=s.blue?.12:.122, maxD=s.blue?30:90, plateCol=s.blue?'#2da6d6':'#f6f7f5';
+ plateSector(pivot[0],py,pivot[2],R,maxD,plateCol);
+ for(let deg=-maxD;deg<=maxD;deg+=(s.blue?5:2)){ let major=(deg%10===0), mid=(!s.blue && deg%5===0); let inn=R-(major?.018:mid?.012:.008); let p=anglePoint(pivot[0],py,pivot[2]+.010,inn,deg*RAD), q=anglePoint(pivot[0],py,pivot[2]+.010,R-.003,deg*RAD); line(p,q,major?.0016:.0010,s.blue?'#eefbfd':(major?'#7b8586':'#a8b1b2')); }
+ if(!s.blue){ for(let deg=-90;deg<=90;deg+=30){ let p=anglePoint(pivot[0],py,pivot[2]+.008,.04,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.008,R-.020,deg*RAD); line(p,q,.0010,'#d6dbd8'); } }
+ else{ for(let deg=-30;deg<=30;deg+=10){ let p=anglePoint(pivot[0],py,pivot[2]+.010,.036,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.010,R-.026,deg*RAD); line(p,q,.0012,'#d7f1f6'); } }
+ line([pivot[0],py,pivot[2]+.011],[pivot[0],py-R+.002,pivot[2]+.011],.0012,s.blue?'#f5fcfe':'#8e9998');
+ staticCount=upload(staticBuf);dirty=false}
+function rebuildDynamic(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
+// dotted arc uses short segments; exactly in the XY plane
+if(s.trajectory){let count=70;for(let i=0;i<count;i+=2){let t1=(-s.a0+2*s.a0*i/count)*RAD,t2=(-s.a0+2*s.a0*(i+1)/count)*RAD;let p=[pc[0]+L*Math.sin(t1),pc[1]-L*Math.cos(t1),pc[2]-.014],q=[pc[0]+L*Math.sin(t2),pc[1]-L*Math.cos(t2),pc[2]-.014];line(p,q,.0045,'#86ada1')}}
+if(s.angleArc){line(pc,[pc[0],pc[1]-.40,pc[2]+.008],.002,'#87a698');for(let i=0;i<26;i++){let a1=a*i/26,a2=a*(i+1)/26;line(anglePoint(pc[0],pc[1],pc[2]+.014,.24,a1),anglePoint(pc[0],pc[1],pc[2]+.014,.24,a2),.004,'#a7c87a')}}
+// World-space geometry expands with camera distance to maintain a minimum on-screen size.
+const focalPixels=Math.max(280,(glCanvas.clientHeight||700)/(2*Math.tan(48*RAD/2)));
+const cameraPoint=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];
+const distanceTo=p=>Math.max(.1,Math.hypot(p[0]-cameraPoint[0],p[1]-cameraPoint[1],p[2]-cameraPoint[2]));
+const visibleRadius=(pos,physical,pixels)=>Math.max(physical,Math.min(45,pixels*distanceTo(pos)/focalPixels));
+const visibleThread=(p,q)=>Math.max(.0048,Math.min(12,1.7*Math.max(distanceTo(p),distanceTo(q))/focalPixels));
+let radius=bobRadius();
+line(pc,bob,visibleThread(pc,bob),'#1c59df');
+ball(bob,visibleRadius(bob,radius,9),'#e48a18',14,24);
+if(s.second){const end=[bob[0]+s.L2*Math.sin(s.theta2),bob[1]-s.L2*Math.cos(s.theta2),bob[2]];const radius2=clamp(.038*Math.cbrt(s.m2/200),.023,.076);
+ line(bob,end,visibleThread(bob,end),'#a52a70');ball(end,visibleRadius(end,radius2,9),'#8658bd',14,24);
+}
+
+dynamicCount=upload(dynamicBuf)}
+function perspective(fovy,aspect,near,far){let f=1/Math.tan(fovy/2),q=1/(near-far);return[f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*q,-1,0,0,2*far*near*q,0]}
+function lookAt(eye,target,up){let z=norm(sub(eye,target)),x=norm(cross(up,z)),y=cross(z,x);return [x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-x.reduce((s,e,i)=>s+e*eye[i],0),-y.reduce((s,e,i)=>s+e*eye[i],0),-z.reduce((s,e,i)=>s+e*eye[i],0),1]}
+function matrixMul(a,b){let o=new Array(16).fill(0);for(let col=0;col<4;col++)for(let row=0;row<4;row++)for(let k=0;k<4;k++)o[col*4+row]+=a[k*4+row]*b[col*4+k];return o}
+let lastVP=null, viewport=[1,1],labelctx=labelCanvas.getContext('2d');
+const miniFrame=$('miniFrame'),miniFallback=$('miniFallback');
+// The inset is a second live camera of the SAME scene, not a copied snapshot.
+function renderMiniViewport(w,h){
+ const visible=roomNeedsOpenSky()&&s.room;
+ miniFrame.hidden=!visible;
+ if(!visible||!gl)return;
+ const r=miniFrame.getBoundingClientRect(),base=glCanvas.getBoundingClientRect(),scaleX=w/base.width,scaleY=h/base.height;
+ const x=Math.max(0,Math.floor((r.left-base.left)*scaleX)),y=Math.max(0,Math.floor((base.bottom-r.bottom)*scaleY));
+ const vw=Math.min(w-x,Math.floor(r.width*scaleX)),vh=Math.min(h-y,Math.floor(r.height*scaleY));if(vw<=0||vh<=0)return;
+ // Fixed initial seating viewpoint, original field of view. Scene and physics remain live.
+ const eye=[0,1.08+Math.sin(.13)*2.05,Math.cos(.13)*2.05],target=[0,1.08,0];
+ const miniVP=matrixMul(perspective(48*RAD,vw/vh,.04,4000),lookAt(eye,target,[0,1,0]));
+ gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,vw,vh);gl.viewport(x,y,vw,vh);
+ gl.clearColor(1,1,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ gl.uniformMatrix4fv(vpLoc,false,new Float32Array(miniVP));
+ drawBuffer(roomBuf,roomCount);drawBuffer(staticBuf,staticCount);drawBuffer(dynamicBuf,dynamicCount);
+ gl.disable(gl.SCISSOR_TEST);gl.viewport(0,0,w,h);
+}
+
+function project(p,mat){let x=p[0],y=p[1],z=p[2],w=mat[3]*x+mat[7]*y+mat[11]*z+mat[15];if(w<=0)return null;return [(mat[0]*x+mat[4]*y+mat[8]*z+mat[12])/w,(mat[1]*x+mat[5]*y+mat[9]*z+mat[13])/w,(mat[2]*x+mat[6]*y+mat[10]*z+mat[14])/w]}
+function resize(c){let d=Math.min(devicePixelRatio||1,gl?2:1),w=Math.round(c.clientWidth*d),h=Math.round(c.clientHeight*d);if(c.width!==w||c.height!==h){c.width=w;c.height=h}return [w,h]}
+function drawLabels(){const [w,h]=resize(labelCanvas);labelctx.clearRect(0,0,w,h);if(!lastVP)return;let to2=p=>{let q=project(p,lastVP);return q&&q[2]<1?[(q[0]*.5+.5)*w,(1-(q[1]*.5+.5))*h,q[2]]:null};
+ const zoomBoost=clamp(1.1+camera.dist*.12,1.0,4.2);
+ const angleFont=Math.round(clamp(Math.max(10,w/90)*zoomBoost,10,28));
+ const rulerFont=Math.round(clamp(Math.max(10,w/85)*zoomBoost,10,30));
+ labelctx.lineJoin='round'; labelctx.lineCap='round';
+ if(Math.cos(camera.yaw)>.22){const max=s.blue?30:90;labelctx.font=`700 ${angleFont}px sans-serif`;labelctx.fillStyle=s.blue?'#fff':'#576565';labelctx.strokeStyle='rgba(255,255,255,.88)';labelctx.lineWidth=Math.max(2,angleFont*.26);labelctx.textAlign='center';labelctx.textBaseline='middle';let lastLeftY=-1e9,lastRightY=-1e9;const minSep=angleFont*.95;for(let d=-max;d<=max;d+=10){let rr=s.blue?.095:.101;let p=to2(anglePoint(pivot[0],pivot[1],plateZ+.016,rr,d*RAD));if(!p)continue;let x=p[0],y=p[1];let side=d<0?'L':d>0?'R':'C';if(side==='L'&&Math.abs(y-lastLeftY)<minSep)continue;if(side==='R'&&Math.abs(y-lastRightY)<minSep)continue;labelctx.strokeText(String(Math.abs(d)),x,y);labelctx.fillText(String(Math.abs(d)),x,y); if(side==='L')lastLeftY=y; else if(side==='R')lastRightY=y;}}
+ const M=apparatusMetrics(); if(Math.cos(camera.yaw)>.12){labelctx.textAlign='left'; labelctx.textBaseline='middle'; labelctx.fillStyle='#d06d76'; labelctx.strokeStyle='rgba(255,255,255,.94)'; labelctx.lineWidth=Math.max(2,rulerFont*.22); labelctx.font=`700 ${rulerFont}px sans-serif`; const span=M.pivotY-(M.baseTop+.042); const step=span<=2?.1:span<=20?1:span<=200?10:100; const useMm=span<=2; const minSep=rulerFont*1.05; let lastY=-1e9; for(let d=0; d<=span+1e-9; d+=step){ let y3=M.pivotY-d; let p=to2([0.018,y3,-0.010]); if(!p) continue; let txt = useMm ? String(Math.round(d*1000)) : String(Math.round(d)); let x=p[0]+Math.max(18,rulerFont*.9), y=p[1]; if(Math.abs(y-lastY)<minSep) continue; labelctx.strokeText(txt, x, y); labelctx.fillText(txt, x, y); lastY=y; }}
+}
+function render(){const [w,h]=resize(glCanvas);if(!w||!h)return;
+let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];let proj=perspective(48*RAD,w/h,.04,4000),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
+const openSky=roomNeedsOpenSky(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(openSky?.60:1.0,openSky?.80:1.0,openSky?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room)drawBuffer(roomBuf,roomCount);drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
+else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels()}
+function renderSoftware(w,h){const ctx=canvas2d;
+ const img=ctx.createImageData(w,h),pixels=img.data,depthBuf=new Float32Array(w*h);
+ const sky=roomNeedsOpenSky();for(let i=0;i<w*h;i++){depthBuf[i]=1;pixels[i*4]=sky?153:255;pixels[i*4+1]=sky?204:255;pixels[i*4+2]=sky?250:255;pixels[i*4+3]=255}
+ const sources=s.room?[roomBuf,staticBuf,dynamicBuf]:[staticBuf,dynamicBuf];
+ for(const name of sources){const arr=fallbackMeshes.get(name);if(!arr)continue;
+ for(let i=0;i<arr.length;i+=27){let pts=[],normal=[arr[i+3],arr[i+4],arr[i+5]],col=[arr[i+6],arr[i+7],arr[i+8]],invalid=false;
+  for(let k=0;k<3;k++){const at=i+k*9,p=project([arr[at],arr[at+1],arr[at+2]],lastVP);if(!p||p[2]<-1||p[2]>1){invalid=true;break}pts.push([(p[0]*.5+.5)*w,(1-(p[1]*.5+.5))*h,p[2]])}
+  if(invalid)continue;
+  const x0=pts[0][0],y0=pts[0][1],z0=pts[0][2],x1=pts[1][0],y1=pts[1][1],z1=pts[1][2],x2=pts[2][0],y2=pts[2][1],z2=pts[2][2];
+  const area=(x1-x0)*(y2-y0)-(y1-y0)*(x2-x0);if(Math.abs(area)<.02)continue;
+  const minx=Math.max(0,Math.floor(Math.min(x0,x1,x2))),maxx=Math.min(w-1,Math.ceil(Math.max(x0,x1,x2))),miny=Math.max(0,Math.floor(Math.min(y0,y1,y2))),maxy=Math.min(h-1,Math.ceil(Math.max(y0,y1,y2)));
+  const bright=.61+.34*Math.max(0,(normal[0]*-.4+normal[1]*.9+normal[2])/1.404)+.07*Math.max(0,normal[1]);
+  const white=Math.min(col[0],col[1],col[2])>.995;const red=white?255:Math.min(255,Math.round(col[0]*bright*255)),green=white?255:Math.min(255,Math.round(col[1]*bright*255)),blue=white?255:Math.min(255,Math.round(col[2]*bright*255));
+  const sign=area>0?1:-1,inv=1/area;
+  for(let y=miny;y<=maxy;y++)for(let x=minx;x<=maxx;x++){
+   let px=x+.5,py=y+.5,w0=((x1-px)*(y2-py)-(y1-py)*(x2-px))*inv,w1=((x2-px)*(y0-py)-(y2-py)*(x0-px))*inv,w2=1-w0-w1;
+   if(w0<-.00001||w1<-.00001||w2<-.00001)continue;
+   const z=w0*z0+w1*z1+w2*z2,offset=y*w+x;
+   if(z>=depthBuf[offset])continue;
+   depthBuf[offset]=z;let k=offset*4;pixels[k]=red;pixels[k+1]=green;pixels[k+2]=blue;
+  }
+ }
+ }
+ ctx.putImageData(img,0,0)
+}
+function getPeriod(){let x=1,y=Math.cos(s.a0*RAD/2);for(let i=0;i<30;i++){let a=(x+y)/2,b=Math.sqrt(x*y);x=a;y=b;if(Math.abs(x-y)<1e-13)break}return 2*PI*Math.sqrt(s.L/9.80665)/x}
+function apparatusMetrics(){const baseTop=.76, bodyH=.684, scaleH=.60, r=bobRadius(), r2=.038*Math.cbrt(s.m2/200), clearance=.09, minPivotY=baseTop+s.L+(s.second?s.L2+Math.max(r,r2):r)+clearance, extByLength=Math.max(0,s.L+(s.second?s.L2:0)-scaleH), extByClearance=Math.max(0,minPivotY-(baseTop+0.605)); const ext=clamp(Math.max(extByLength,extByClearance),0,1000-bodyH); return {baseTop, bodyH, scaleH, ext, topY:baseTop+bodyH+ext, pivotY:baseTop+0.605+ext, pivotZ:.078, pivotX:.0}; }
+function reset(){s.playing=false;s.t=0;s.theta=s.a0*RAD;s.omega=0;s.theta2=s.a02*RAD;s.omega2=0;s.track=[];$('start').textContent='▶ 開始';$('status').textContent='停止中';updateStats()}
+function readParams(){for(const [id,key] of [['length','L'],['mass','m'],['angle','a0']]){$(id).value=s[key];$(id+'Num').value=key==='L'?s[key].toFixed(2):s[key].toFixed(0)}}
+for(const [id,key,min,max,round] of [['length','L',.15,1000,.01],['mass','m',20,1000,10],['angle','a0',0,80,1]]){for(const kind of ['', 'Num'])$(id+kind).addEventListener(kind?'change':'input',e=>{let v=+e.target.value;if(!Number.isFinite(v))return;s[key]=Math.round(clamp(v,min,max)/round)*round;readParams();enforceLimit(key);reset();if(key==='L'||key==='m'){dirty=true;buildRoom();const M=apparatusMetrics();camera.ty=1.08+Math.max(0,M.topY-1.08)*.28;camera.dist=Math.max(camera.dist,2.05+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35)}})}
+function enforceLimit(which){const r1=bobRadius(),r2=clamp(.038*Math.cbrt(s.m2/200),.023,.076),maxCombined=999.80-Math.max(r1,r2)-.09; if(s.second){if(which==='L'){s.L=Math.min(s.L,maxCombined-s.L2)}else{s.L2=Math.min(s.L2,maxCombined-s.L)}s.L=Math.max(.15,s.L);s.L2=Math.max(.05,s.L2)}
+readParams();for(const [id,key] of [['length2','L2'],['mass2','m2'],['angle2','a02']]){$(id).value=s[key];$(id+'Num').value=key==='L2'?s[key].toFixed(2):s[key].toFixed(0)}$('limitInfo').textContent='2本の合計 '+(s.L+s.L2).toFixed(2)+' m / 支柱の最大高さ 1000 m（球半径・安全余裕を考慮）';}
+$('doubleEnabled').addEventListener('change',e=>{s.second=e.target.checked;$('secondParams').hidden=!s.second;enforceLimit();reset();dirty=true;buildRoom()});
+for(const [id,key,min,max,round] of [['length2','L2',.05,999,.01],['mass2','m2',20,1000,10],['angle2','a02',-80,80,1]]){for(const kind of ['', 'Num'])$(id+kind).addEventListener(kind?'change':'input',e=>{const n=+e.target.value;if(!Number.isFinite(n))return;s[key]=Math.round(clamp(n,min,max)/round)*round;enforceLimit(key);reset();dirty=true;buildRoom()})}
+$('start').onclick=()=>{s.playing=!s.playing;$('start').textContent=s.playing?'Ⅱ 一時停止':'▶ 再開';$('status').textContent=s.playing?'実験中':'一時停止中'};$('reset').onclick=reset;
+for(const [id,key] of [['trajectory','trajectory'],['angleArc','angleArc'],['roomToggle','room']])$(id).onchange=e=>s[key]=e.target.checked;
+for(const [id,on] of [['bluePlate',true],['fullPlate',false]])$(id).onclick=()=>{s.blue=on;dirty=true;document.querySelectorAll('.radioBtns button').forEach(b=>b.classList.toggle('active',b.id===id))};
+const presets={front:[0,.13,2.05],diagonal:[.58,.18,4.45],top:[.48,.78,5.45],room:[.50,.24,10.5]};
+for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{let v=presets[b.dataset.view],M=apparatusMetrics();currentView=b.dataset.view;camera.yaw=v[0];camera.pitch=v[1];camera.dist=v[2]+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35;camera.tx=0;camera.tz=0;camera.ty=1.08+Math.max(0,M.topY-1.08)*.28;document.querySelectorAll('[data-view]').forEach(t=>t.classList.toggle('active',t===b))};
+let moving=false,moveMode='orbit',moved=[0,0];glCanvas.addEventListener('contextmenu',e=>e.preventDefault());glCanvas.addEventListener('pointerdown',e=>{if(!(e.button===0||e.button===1||e.button===2))return;moveMode=(e.button===2||e.shiftKey)?'pan':'orbit';moving=true;moved=[e.clientX,e.clientY];glCanvas.setPointerCapture(e.pointerId)});
+glCanvas.addEventListener('pointermove',e=>{if(!moving)return;let dx=e.clientX-moved[0],dy=e.clientY-moved[1];moved=[e.clientX,e.clientY];if(moveMode==='orbit'){camera.yaw-=dx*.006;camera.pitch=clamp(camera.pitch+dy*.005,-.40,1.38)}else{const sPan=camera.dist*.0017, rx=Math.cos(camera.yaw), rz=-Math.sin(camera.yaw); camera.tx-=dx*sPan*rx; camera.tz-=dx*sPan*rz; camera.ty+=dy*sPan;}document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'))});glCanvas.addEventListener('pointerup',()=>moving=false);glCanvas.addEventListener('pointercancel',()=>moving=false);
+glCanvas.addEventListener('wheel',e=>{e.preventDefault();camera.dist=clamp(camera.dist*Math.exp(e.deltaY*.0012),0.55,2400)},{passive:false});
+function derivative(theta,omega){return [omega,-9.80665*Math.sin(theta)/s.L]}
+function coupled(q){const [a,b,u,v]=q, L=s.L,l=s.L2,m=s.m/1000,n=s.m2/1000, delta=a-b, c=Math.cos(delta), si=Math.sin(delta),D=(m+n)-n*c*c;
+const rhs1= -n*l*si*v*v-(m+n)*9.80665*Math.sin(a);
+const rhs2= L*si*u*u-9.80665*Math.sin(b);
+const aa=(rhs1-n*c*rhs2)/(L*D);
+const bb=(rhs2-c*L*aa)/l;
+return [u,v,aa,bb]}
+function step(dt){if(s.second){let q=[s.theta,s.theta2,s.omega,s.omega2],k1=coupled(q);const add=(k,h)=>q.map((v,i)=>v+h*k[i]);let k2=coupled(add(k1,dt/2)),k3=coupled(add(k2,dt/2)),k4=coupled(add(k3,dt));q=q.map((v,i)=>v+dt*(k1[i]+2*k2[i]+2*k3[i]+k4[i])/6);[s.theta,s.theta2,s.omega,s.omega2]=q}
+else{let th=s.theta,om=s.omega;let a=derivative(th,om),b=derivative(th+dt*a[0]/2,om+dt*a[1]/2),c=derivative(th+dt*b[0]/2,om+dt*b[1]/2),d=derivative(th+dt*c[0],om+dt*c[1]);s.theta+=dt*(a[0]+2*b[0]+2*c[0]+d[0])/6;s.omega+=dt*(a[1]+2*b[1]+2*c[1]+d[1])/6} s.t+=dt;
+if(s.track.length===0||s.t-s.track[s.track.length-1].t>.025){const m=s.m/1000,n=s.second?s.m2/1000:0,L=s.L,l=s.L2,u=s.omega,v=s.omega2,delta=s.theta-s.theta2;
+const K=.5*(m+n)*L*L*u*u+.5*n*l*l*v*v+n*L*l*u*v*Math.cos(delta);
+const U=(m+n)*9.80665*L*(1-Math.cos(s.theta))+n*9.80665*l*(1-Math.cos(s.theta2));
+s.track.push({t:s.t,angle:s.theta/RAD,angle2:s.theta2/RAD,velocity:s.omega/RAD,velocity2:s.omega2/RAD,x:L*Math.sin(s.theta),x2:L*Math.sin(s.theta)+l*Math.sin(s.theta2),energy:K+U});if(s.track.length>10000)s.track.splice(0,1000)}}
+function updateStats(){$('thetaRead').textContent=(s.theta>=0?'+':'')+(s.theta/RAD).toFixed(1);$('thetaLive').textContent=(s.theta>=0?'+':'')+(s.theta/RAD).toFixed(1)+'°';$('timeRead').textContent=s.t.toFixed(2);let T=getPeriod();$('periodRead').textContent=s.second?'—':T.toFixed(2);$('frequencyRead').textContent=s.second?'—':(1/T).toFixed(3)}
+function drawGraph(){const c=graph.getContext('2d'),[w,h]=resize(graph),mode=$('graphMode').value,l=40,t=14,r=12,b=29,pw=w-l-r,ph=h-t-b;c.clearRect(0,0,w,h);c.fillStyle='#fff';c.fillRect(0,0,w,h);
+const time0=Math.max(0,s.t-12),time1=time0+12,rows=s.track.filter(q=>q.t>=time0&&q.t<=time1);const ky=mode==='angle'?'angle':mode==='speed'?'velocity':mode==='path'?'x':'energy',ky2=mode==='angle'?'angle2':mode==='speed'?'velocity2':mode==='path'?'x2':null;
+let values=rows.flatMap(q=>ky2&&s.second?[q[ky],q[ky2]]:[q[ky]]);let bound=mode==='angle'?Math.max(30,s.a0*1.5,Math.abs(s.a02)*1.5):mode==='speed'?Math.max(50,...values.map(Math.abs)):mode==='path'?Math.max(1,s.L+s.L2,...values.map(Math.abs)):Math.max(.1,...values);bound=Number.isFinite(bound)?bound:1;const ymin=mode==='energy'?0:-bound,ymax=bound;
+const X=x=>l+(x-time0)/12*pw,Y=y=>t+(ymax-y)/(ymax-ymin)*ph;
+c.font='11px sans-serif';c.textAlign='right';c.fillStyle='#66716f';c.strokeStyle='#e5e5e5';c.lineWidth=1;for(let i=0;i<=4;i++){let y=t+i*ph/4;c.beginPath();c.moveTo(l,y);c.lineTo(w-r,y);c.stroke();c.fillText((ymax-(ymax-ymin)*i/4).toFixed(mode==='energy'?2:0),l-5,y+3)}c.textAlign='center';for(let i=0;i<=6;i++){let x=l+pw*i/6;c.beginPath();c.moveTo(x,t);c.lineTo(x,t+ph);c.stroke();c.fillText((time0+i*2).toFixed(0),x,h-10)}
+for(const [key,col] of [[ky,'#2563c9'],[ky2,'#9c4cc7']]){if(!key||key===ky2&&!s.second)continue;c.strokeStyle=col;c.lineWidth=2.1;c.beginPath();let first=true;for(const q of rows){const x=X(q.t),y=Y(q[key]);if(first){c.moveTo(x,y);first=false}else c.lineTo(x,y)}if(!first)c.stroke()}
+if(s.second && ky2){c.fillStyle='#2563c9';c.textAlign='left';c.fillText('● 錘1',l+7,t+12);c.fillStyle='#9c4cc7';c.fillText('● 錘2',l+65,t+12)}}
+$('csv').onclick=()=>{if(!s.track.length){alert('開始して測定値を記録してください。');return}let lines=['time_s,angle1_deg,angle2_deg,angular_velocity1_deg_s,angular_velocity2_deg_s,x1_m,x2_m,total_energy_J'];for(let q of s.track)lines.push([q.t.toFixed(4),q.angle.toFixed(5),q.angle2.toFixed(5),q.velocity.toFixed(5),q.velocity2.toFixed(5),q.x.toFixed(5),q.x2.toFixed(5),q.energy.toFixed(6)].join(','));let u=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=u;a.download='pendulum_science_lab.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)};
+let last=0,elapsed=0;function frame(t){requestAnimationFrame(frame);if(!gl&&t-last<55)return;let dt=Math.min(gl?.06:.32,Math.max(0,(t-last)/1000));last=t;if(s.playing){elapsed+=dt;let k=0;while(elapsed>=1/240&&k++<(gl?20:90)){step(1/240);elapsed-=1/240}}else elapsed=0;
+if(dirty)rebuildStatic();render();updateStats();drawGraph()}
+try{buildRoom();rebuildStatic();readParams();reset();requestAnimationFrame(frame)}catch(err){$('webglError').style.display='block';$('webglError').textContent='3D描画の初期化に失敗しました: '+err.message;console.error(err)}
+})();
+</script>
+</body></html>
