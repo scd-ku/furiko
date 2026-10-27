@@ -432,7 +432,7 @@ function pointerPolar(e,center){
  return {angle:Math.atan2(h,v)/RAD,length:Math.hypot(h,v)};
 }
 function clampIndoorCamera(){
- if(s.indoor)return;
+ if(!s.indoor)return;
  // With the indoor checkbox OFF, keep the observer inside the laboratory footprint;
  // restrict camera target and orbit so exterior scenery cannot enter the view.
  camera.tx=clamp(camera.tx,-1.1,1.1);camera.tz=clamp(camera.tz,-1.4,1.3);
