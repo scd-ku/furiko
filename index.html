@@ -38,7 +38,7 @@
 <label class="check"><input id="angleArc" type="checkbox" checked>角度のガイド線</label>
 <label class="check"><input id="roomToggle" type="checkbox" checked>理科室を表示</label>
 <label class="check"><input id="indoorMode" type="checkbox" checked>屋内（支柱の高さ 3m以内）</label>
-<label class="check"><input id="velocityVectors" type="checkbox">錘の水平・下向き速度を表示（km/h）</label>
+<label class="check"><input id="velocityVectors" type="checkbox">錘の水平・鉛直速度を表示（km/h）</label><label class="check"><input id="showStringLength" type="checkbox">紐の長さを紐の上に表示</label><label class="check"><input id="showBobMass" type="checkbox">錘の質量を錘の上に表示</label>
 <div style="margin:14px 0 7px;font-size:11px;font-weight:700">分度器の形式</div><div class="radioBtns"><button id="bluePlate">青色 ±30°</button><button id="fullPlate" class="active">180°半円</button></div><p class="tip">180°半円と青色±30°の表示を切り替えます。</p></section>
 <section class="panel"><h2>実験上の注意</h2><div class="callout">長さを長くすると、おもりが机や台座に接触しないよう支柱が自動で上昇します。理科室の天井高は3.0mを基準にし、支柱がそれを超えると上空を青空表示に切り替えます。支柱側の定規は回転軸側を0として表示します。</div></section>
 
@@ -137,7 +137,7 @@ if(!openSky){box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7'); for(const z of [-6,-
 for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
 box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
 roomCount=upload(roomBuf)}
-const s={indoor:true,showVelocity:false,L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,angleArc:true,room:true,blue:false};
+const s={indoor:true,showVelocity:false,showStringLength:false,showBobMass:false,L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,angleArc:true,room:true,blue:false};
 let pivot=[.02,1.95,.19],plateZ=.04,bob=[0,0,0], camera={yaw:0,pitch:.13,dist:2.05,tx:0,ty:1.08,tz:0},cursorTarget=null,currentView='front',dirty=true;
 function rebuildStatic(){mesh=[];labTable(0,0,true); // main experimental island
  const M=apparatusMetrics(), ty=M.baseTop, ext=M.ext;
@@ -230,35 +230,53 @@ function drawLabels(){const [w,h]=resize(labelCanvas);labelctx.clearRect(0,0,w,h
  const M=apparatusMetrics(); if(Math.cos(camera.yaw)>.12){labelctx.textAlign='left'; labelctx.textBaseline='middle'; labelctx.fillStyle='#d06d76'; labelctx.strokeStyle='rgba(255,255,255,.94)'; labelctx.lineWidth=Math.max(2,rulerFont*.22); labelctx.font=`700 ${rulerFont}px sans-serif`; const span=M.pivotY-(M.baseTop+.042); const step=span<=2?.1:span<=20?1:span<=200?10:100; const useMm=span<=2; const minSep=rulerFont*1.05; let lastY=-1e9; for(let d=0; d<=span+1e-9; d+=step){ let y3=M.pivotY-d; let p=to2([0.018,y3,-0.010]); if(!p) continue; let txt = useMm ? String(Math.round(d*1000)) : String(Math.round(d)); let x=p[0]+Math.max(18,rulerFont*.9), y=p[1]; if(Math.abs(y-lastY)<minSep) continue; labelctx.strokeText(txt, x, y); labelctx.fillText(txt, x, y); lastY=y; }}
 }
 function drawVelocityOverlay(){
- if(!s.showVelocity||!lastVP)return;
- const W=labelCanvas.width,H=labelCanvas.height;
- const toScreen=p=>{const q=project(p,lastVP);return q&&q[2]<1&&q[2]>-1?[(q[0]+1)*W/2,(1-q[1])*H/2]:null};
- const base=[pivot[0],pivot[1],pivot[2]+.016];
- const b1=[base[0]+s.L*Math.sin(s.theta),base[1]-s.L*Math.cos(s.theta),base[2]];
- const vx1=s.L*s.omega*Math.cos(s.theta),vy1=s.L*s.omega*Math.sin(s.theta);
- const items=[[b1,vx1,vy1]];
- if(s.second){
-  const b2=[b1[0]+s.L2*Math.sin(s.theta2),b1[1]-s.L2*Math.cos(s.theta2),b1[2]];
-  items.push([b2,vx1+s.L2*s.omega2*Math.cos(s.theta2),vy1+s.L2*s.omega2*Math.sin(s.theta2)]);
- }
- const ctx=labelctx;ctx.save();ctx.font='bold 24px sans-serif';ctx.textBaseline='middle';ctx.lineWidth=3;
- const drawArrow=(sx,sy,dx,dy,caption,color)=>{
-  const ex=sx+dx,ey=sy+dy,angle=Math.atan2(dy,dx);
-  ctx.strokeStyle='#fff';ctx.lineWidth=13;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-  ctx.strokeStyle=color;ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-21*Math.cos(angle-.45),ey-21*Math.sin(angle-.45));ctx.lineTo(ex-17*Math.cos(angle+.45),ey-17*Math.sin(angle+.45));ctx.fill();
-  ctx.fillStyle='#222';ctx.strokeStyle='#fff';ctx.lineWidth=4;const tx=ex+8,ty=ey-14;ctx.strokeText(caption,tx,ty);ctx.fillText(caption,tx,ty);
+ if((!s.showVelocity&&!s.showStringLength&&!s.showBobMass)||!lastVP)return;
+ const W=labelCanvas.width,H=labelCanvas.height,ctx=labelctx;
+ const screen=p=>{const q=project(p,lastVP);return q&&q[2]<1&&q[2]>-1?[(q[0]+1)*W/2,(1-q[1])*H/2]:null};
+ const pivotPoint=[pivot[0],pivot[1],pivot[2]+.016],bobs=bobCoordinates();
+ const points=[pivotPoint,bobs[0],...(s.second?[bobs[1]]:[])];
+ const items=[
+  {pos:bobs[0],vx:s.L*s.omega*Math.cos(s.theta),down:-s.L*s.omega*Math.sin(s.theta),mass:s.m,len:s.L,from:pivotPoint,color:'#1463b8'},
+ ];
+ if(s.second)items.push({pos:bobs[1],vx:items[0].vx+s.L2*s.omega2*Math.cos(s.theta2),down:items[0].down-s.L2*s.omega2*Math.sin(s.theta2),mass:s.m2,len:s.L2,from:bobs[0],color:'#8054aa'});
+ ctx.save();ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineCap='round';
+ const textLabel=(txt,x,y,{color='#222',size=16,align='left'}={})=>{
+  ctx.font='bold '+size+'px sans-serif';ctx.textAlign=align;
+  const width=ctx.measureText(txt).width;
+  x=Math.max(7+(align==='center'?width/2:0),Math.min(W-8-(align==='center'?width/2:width),x));
+  y=Math.max(size/2+4,Math.min(H-size/2-4,y));
+  ctx.lineWidth=5;ctx.strokeStyle='rgba(255,255,255,.98)';ctx.strokeText(txt,x,y);
+  ctx.fillStyle=color;ctx.fillText(txt,x,y);
  };
- for(const [index,item] of items.entries()){
-   const [pos,vx,vy]=item,p=toScreen(pos);if(!p)continue;
-   // Actual x/y components in m/s -> km/h; downward positive by convention.
-   const speedX=Math.abs(vx*3.6), speedDown=vy*3.6;
-   const lenX=Math.min(160,Math.max(55,speedX*18));
-   const lenY=Math.min(160,Math.max(55,Math.abs(speedDown)*18));
-   // Displace second-bob annotations to avoid collisions between labels.
-   const offset=index===0?-18:18,ox=p[0],oy=p[1]+offset;
-   drawArrow(ox,oy,(vx>=0?1:-1)*lenX,0,'横 '+speedX.toFixed(2)+' km/h','#1463b8');
-   drawArrow(ox+offset,oy+5,0,(vy>=0?1:-1)*lenY,'下 '+speedDown.toFixed(2)+' km/h','#c74727');
+ const arrow=(origin,dx,dy,label,color,orientation)=>{
+  const len=Math.hypot(dx,dy),ux=dx/len,uy=dy/len;
+  const x0=origin[0]+ux*13,y0=origin[1]+uy*13,ex=origin[0]+dx,ey=origin[1]+dy;
+  ctx.strokeStyle='white';ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(ex,ey);ctx.stroke();
+  ctx.strokeStyle=color;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(ex,ey);ctx.stroke();
+  // Symmetrical filled triangular head, oriented along the velocity vector.
+  const head=17,half=8,bx=ex-ux*head,by=ey-uy*head;
+  ctx.fillStyle=color;ctx.strokeStyle='white';ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(bx-uy*half,by+ux*half);ctx.lineTo(bx+uy*half,by-ux*half);ctx.closePath();ctx.fill();ctx.stroke();
+  // Put the value beyond the arrow tip, not on its shaft.
+  const gap=13,labelX=ex+ux*gap+(orientation==='vertical'?12:0),labelY=ey+uy*gap+(orientation==='horizontal'?-13:0);
+  textLabel(label,labelX,labelY,{color:'#222',size:17,align:orientation==='vertical'?'left':(dx<0?'right':'left')});
+ };
+ for(let i=0;i<items.length;i++){
+  const b=items[i],p=screen(b.pos),p0=screen(b.from);if(!p||!p0)continue;
+  if(s.showStringLength){
+   const x=p0[0]*.55+p[0]*.45,y=p0[1]*.55+p[1]*.45;
+   textLabel('L'+(i+1)+' '+b.len.toFixed(2)+' m',x+18,y-17,{size:17,color:'#333'});
+  }
+  if(s.showBobMass)textLabel('m'+(i+1)+' '+b.mass.toFixed(0)+' g',p[0]+16,p[1]-30,{size:17,color:'#333'});
+  if(!s.showVelocity)continue;
+  const vx=b.vx*3.6,down=b.down*3.6,ox=p[0],oy=p[1];
+  // Circular mass-point origin, centered on the physical bob.
+  ctx.beginPath();ctx.arc(ox,oy,8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#222';ctx.lineWidth=2.5;ctx.stroke();
+  const lx=Math.min(170,Math.max(65,Math.abs(vx)*16)),ly=Math.min(170,Math.max(65,Math.abs(down)*16));
+  arrow([ox,oy],(vx<-.000001?-1:1)*lx,0,'横 '+Math.abs(vx).toFixed(1)+' km/h','#1463b8','horizontal');
+  // The screen's positive vertical direction is downward. Physical y increases upward;
+  // 'down' = -d(y)/dt, so falling bobs point downward.
+  arrow([ox,oy],0,(down<-.000001?-1:1)*ly,(down<-.000001?'上 ':'下 ')+Math.abs(down).toFixed(1)+' km/h','#c74727','vertical');
  }
  ctx.restore();
 }
@@ -316,7 +334,7 @@ function enforceLimit(which){
 }
 function updateIndoor(){s.indoor=$('indoorMode').checked;enforceLimit('L');reset();dirty=true;buildRoom();const M=apparatusMetrics();camera.ty=s.indoor?1.08:Math.max(1.08,M.topY*.38);camera.dist=s.indoor?2.05:Math.max(2.05,M.topY*1.5)}
 $('indoorMode').addEventListener('change',updateIndoor);
-$('velocityVectors').addEventListener('change',e=>s.showVelocity=e.target.checked);
+$('velocityVectors').addEventListener('change',e=>s.showVelocity=e.target.checked);for(const [id,key] of [['showStringLength','showStringLength'],['showBobMass','showBobMass']])$(id).addEventListener('change',e=>s[key]=e.target.checked);
 const stageElement=document.querySelector('.stage');
 function updateFullscreenText(){$('fullscreenBtn').textContent=document.fullscreenElement?'⛶ 終了':'⛶ 全画面'}
 $('fullscreenBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await stageElement.requestFullscreen()}catch(e){alert('全画面表示を開始できません: '+e.message)}});
