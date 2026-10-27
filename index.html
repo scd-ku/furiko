@@ -180,7 +180,7 @@ document.getElementById('removeApparatus').addEventListener('click',()=>{
  if(unitStates.length===1)return;persistActive();unitStates.pop();activeUnit=0;Object.assign(s,unitStates[0]);enforceLimit('L');readParams();resetUnitDisplay();refreshUnitTabs();history.length=0;dirty=true;buildRoom();
 });
 let pivot=[.02,1.95,.19],plateZ=.04,bob=[0,0,0], camera={yaw:0,pitch:.13,dist:2.05,tx:0,ty:1.08,tz:0},cursorTarget=null,currentView='front',dirty=true;
-function rebuildStatic(){mesh=[];labTable(0,0,true); // main experimental island
+function rebuildStaticUnit(){mesh=[];labTable(0,0,true); // main experimental island
  const M=apparatusMetrics(), ty=M.baseTop, ext=M.ext;
  const supportX=0, supportZ=-.072, scaleX=.006, scaleZ=-.022;
  // apparatus base: 240 x 170 mm metal base with black corner caps
@@ -219,7 +219,16 @@ function rebuildStatic(){mesh=[];labTable(0,0,true); // main experimental island
  else{ for(let deg=-30;deg<=30;deg+=10){ let p=anglePoint(pivot[0],py,pivot[2]+.010,.036,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.010,R-.026,deg*RAD); line(p,q,.0012,'#d7f1f6'); } }
  line([pivot[0],py,pivot[2]+.011],[pivot[0],py-R+.002,pivot[2]+.011],.0012,s.blue?'#f5fcfe':'#8e9998');
  staticCount=upload(staticBuf);dirty=false}
-function rebuildDynamic(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
+function rebuildStatic(){
+ persistActive();
+ const all=[];
+ for(let i=0;i<unitStates.length;i++){
+  runUnit(i,()=>{rebuildStaticUnit();shiftMeshX(unitOffset(i));all.push(...mesh)});
+ }
+ mesh=all;staticCount=upload(staticBuf);dirty=false;
+ pivot[0]=unitOffset(activeUnit);
+}
+function rebuildDynamicUnit(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
 // dotted arc uses short segments; exactly in the XY plane
 if(s.trajectory){let count=70;for(let i=0;i<count;i+=2){let t1=(-s.a0+2*s.a0*i/count)*RAD,t2=(-s.a0+2*s.a0*(i+1)/count)*RAD;let p=[pc[0]+L*Math.sin(t1),pc[1]-L*Math.cos(t1),pc[2]-.014],q=[pc[0]+L*Math.sin(t2),pc[1]-L*Math.cos(t2),pc[2]-.014];line(p,q,.0045,'#86ada1')}}
 if(s.angleArc){line(pc,[pc[0],pc[1]-.40,pc[2]+.008],.002,'#87a698');for(let i=0;i<26;i++){let a1=a*i/26,a2=a*(i+1)/26;line(anglePoint(pc[0],pc[1],pc[2]+.014,.24,a1),anglePoint(pc[0],pc[1],pc[2]+.014,.24,a2),.004,'#a7c87a')}}
@@ -237,6 +246,13 @@ if(s.second){const end=[bob[0]+s.L2*Math.sin(s.theta2),bob[1]-s.L2*Math.cos(s.th
 }
 
 dynamicCount=upload(dynamicBuf)}
+function rebuildDynamic(){
+ persistActive();const all=[];
+ for(let i=0;i<unitStates.length;i++){
+  runUnit(i,()=>{pivot[0]=0;rebuildDynamicUnit();shiftMeshX(unitOffset(i));all.push(...mesh)});
+ }
+ mesh=all;dynamicCount=upload(dynamicBuf);pivot[0]=unitOffset(activeUnit);
+}
 function perspective(fovy,aspect,near,far){let f=1/Math.tan(fovy/2),q=1/(near-far);return[f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*q,-1,0,0,2*far*near*q,0]}
 function lookAt(eye,target,up){let z=norm(sub(eye,target)),x=norm(cross(up,z)),y=cross(z,x);return [x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-x.reduce((s,e,i)=>s+e*eye[i],0),-y.reduce((s,e,i)=>s+e*eye[i],0),-z.reduce((s,e,i)=>s+e*eye[i],0),1]}
 function matrixMul(a,b){let o=new Array(16).fill(0);for(let col=0;col<4;col++)for(let row=0;row<4;row++)for(let k=0;k<4;k++)o[col*4+row]+=a[k*4+row]*b[col*4+k];return o}
@@ -351,7 +367,7 @@ function renderSoftware(w,h){const ctx=canvas2d;
 }
 function getPeriod(){let x=1,y=Math.cos(s.a0*RAD/2);for(let i=0;i<30;i++){let a=(x+y)/2,b=Math.sqrt(x*y);x=a;y=b;if(Math.abs(x-y)<1e-13)break}return 2*PI*Math.sqrt(s.L/9.80665)/x}
 function apparatusMetrics(){const baseTop=.76, bodyH=.684, scaleH=.60, r=bobRadius(), r2=.038*Math.cbrt(s.m2/200), clearance=.09, minPivotY=baseTop+s.L+(s.second?s.L2+Math.max(r,r2):r)+clearance, extByLength=Math.max(0,s.L+(s.second?s.L2:0)-scaleH), extByClearance=Math.max(0,minPivotY-(baseTop+0.605)); const ext=clamp(Math.max(extByLength,extByClearance),0,(s.indoor?3:1000)-baseTop-bodyH); return {baseTop, bodyH, scaleH, ext, topY:baseTop+bodyH+ext, pivotY:baseTop+0.605+ext, pivotZ:.078, pivotX:.0}; }
-function reset(){history.length=0;s.playing=false;s.t=0;s.theta=s.a0*RAD;s.omega=0;s.theta2=s.a02*RAD;s.omega2=0;s.track=[];$('start').textContent='▶ 開始';$('status').textContent='停止中';updateStats()}
+function reset(){history.length=0;s.playing=false;persistActive();for(let i=0;i<unitStates.length;i++)runUnit(i,()=>{s.t=0;s.theta=s.a0*RAD;s.omega=0;s.theta2=s.a02*RAD;s.omega2=0;s.track=[]});$('start').textContent='▶ 開始';$('status').textContent='停止中';updateStats()}
 function readParams(){for(const [id,key] of [['length','L'],['mass','m'],['angle','a0']]){$(id).value=s[key];$(id+'Num').value=key==='L'?s[key].toFixed(2):s[key].toFixed(0)}}
 for(const [id,key,min,max,round] of [['length','L',.15,1000,.01],['mass','m',20,1000,10],['angle','a0',-80,80,1]]){for(const kind of ['', 'Num'])$(id+kind).addEventListener(kind?'change':'input',e=>{let v=+e.target.value;if(!Number.isFinite(v))return;s[key]=Math.round(clamp(v,min,max)/round)*round;readParams();enforceLimit(key);reset();if(key==='L'||key==='m'){dirty=true;buildRoom();const M=apparatusMetrics();camera.ty=1.08+Math.max(0,M.topY-1.08)*.28;camera.dist=Math.max(camera.dist,2.05+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35)}})}
 function enforceLimit(which){
@@ -389,8 +405,8 @@ const presets={front:[0,.13,2.05],diagonal:[.58,.18,4.45],top:[.48,.78,5.45],roo
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{let v=presets[b.dataset.view],M=apparatusMetrics();currentView=b.dataset.view;camera.yaw=v[0];camera.pitch=v[1];camera.dist=v[2]+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35;camera.tx=0;camera.tz=0;camera.ty=1.08+Math.max(0,M.topY-1.08)*.28;clampIndoorCamera();document.querySelectorAll('[data-view]').forEach(t=>t.classList.toggle('active',t===b))};
 const history=[];const stepFrame=1/60;let playRate=1,grabbedBob=0;
 const saveState=()=>({theta:s.theta,theta2:s.theta2,omega:s.omega,omega2:s.omega2,t:s.t,trackLength:s.track.length});
-function rewindFrame(){if(!history.length)return;const h=history.pop();Object.assign(s,{theta:h.theta,theta2:h.theta2,omega:h.omega,omega2:h.omega2,t:h.t});s.track.length=h.trackLength;}
-function advanceFrame(){history.push(saveState());if(history.length>3600)history.shift();for(let i=0;i<4;i++)step(1/240);}
+function rewindFrame(){if(!history.length)return;const snapshot=history.pop();snapshot.forEach((u,i)=>Object.assign(unitStates[i],u));Object.assign(s,unitStates[activeUnit])}
+function advanceFrame(){persistActive();history.push(unitStates.map(u=>({...u,track:u.track.slice()})));if(history.length>3600)history.shift();for(let j=0;j<unitStates.length;j++)runUnit(j,()=>{for(let i=0;i<4;i++)step(1/240)})}
 function pauseForEdit(){s.playing=false;elapsed=0;$('start').textContent='▶ 開始';$('status').textContent='停止中';syncFullscreenPlayback()}function syncFullscreenPlayback(){$('fsPlay').textContent=s.playing?'Ⅱ 一時停止':'▶ 再生';$('fsRate').value=String(playRate)}$('fsPlay').addEventListener('click',()=>{$('start').click();syncFullscreenPlayback()});$('fsBack').addEventListener('click',()=>{$('stepBack').click();syncFullscreenPlayback()});$('fsNext').addEventListener('click',()=>{$('stepForward').click();syncFullscreenPlayback()});$('fsRate').addEventListener('change',e=>{$('playbackRate').value=e.target.value;$('playbackRate').dispatchEvent(new Event('change'));syncFullscreenPlayback()});
 $('playbackRate').addEventListener('change',e=>{playRate=Number(e.target.value)||1;syncFullscreenPlayback()});
 $('stepForward').addEventListener('click',()=>{pauseForEdit();advanceFrame()});
@@ -442,7 +458,7 @@ if(s.second && ky2){c.fillStyle='#2563c9';c.textAlign='left';c.fillText('● 錘
 $('csv').onclick=()=>{if(!s.track.length){alert('開始して測定値を記録してください。');return}let lines=['time_s,angle1_deg,angle2_deg,angular_velocity1_deg_s,angular_velocity2_deg_s,x1_m,x2_m,total_energy_J'];for(let q of s.track)lines.push([q.t.toFixed(4),q.angle.toFixed(5),q.angle2.toFixed(5),q.velocity.toFixed(5),q.velocity2.toFixed(5),q.x.toFixed(5),q.x2.toFixed(5),q.energy.toFixed(6)].join(','));let u=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=u;a.download='pendulum_science_lab.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)};
 let last=0,elapsed=0;function frame(t){requestAnimationFrame(frame);if(!gl&&t-last<55)return;let dt=Math.min(gl?.06:.32,Math.max(0,(t-last)/1000));last=t;if(s.playing){elapsed+=dt*playRate;let k=0;while(elapsed>=stepFrame&&k++<120){advanceFrame();elapsed-=stepFrame}}else elapsed=0;
 if(dirty)rebuildStatic();render();updateStats();drawGraph()}
-try{enforceLimit('L');buildRoom();rebuildStatic();readParams();reset();requestAnimationFrame(frame)}catch(err){$('webglError').style.display='block';$('webglError').textContent='3D描画の初期化に失敗しました: '+err.message;console.error(err)}
+try{enforceLimit('L');refreshUnitTabs();buildRoom();rebuildStatic();readParams();reset();requestAnimationFrame(frame)}catch(err){$('webglError').style.display='block';$('webglError').textContent='3D描画の初期化に失敗しました: '+err.message;console.error(err)}
 })();
 </script>
 </body></html>
