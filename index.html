@@ -95,7 +95,7 @@ if(primary){for(let side of [-1,1]){box(x-.38,y-.205,z+side*.27,.18,.08,.04,'#d6
 function stool(x,z){cyl([x,.52,z],[x,.55,z],.19,'#9e7855',18);for(const [a,b] of [[-.14,-.14],[.14,-.14],[-.14,.14],[.14,.14]])cyl([x+a,.02,z+b],[x+a*.70,.515,z+b*.70],.015,'#a4afac',8)}
 const ROOM_CEILING_Y=3.0;
 function bobRadius(){let r=.038*Math.cbrt(s.m/200);return clamp(r,.023,.076)}
-function roomNeedsOpenSky(){return apparatusMetrics().topY>.97*ROOM_CEILING_Y}
+function roomNeedsOpenSky(){return !s.indoor&&apparatusMetrics().topY>.97*ROOM_CEILING_Y}
 function buildRoom(){mesh=[];let floorY=-.018;const ceilingY=ROOM_CEILING_Y, openSky=roomNeedsOpenSky();
 if(openSky){
  // broad green terrain around the school, horizon visible above the classroom
@@ -297,7 +297,7 @@ for(const [id,key,min,max,round] of [['length','L',.15,1000,.01],['mass','m',20,
 function enforceLimit(which){
  const limitHeight=s.indoor?3:1000,base=.76+.605,margin=.09;
  const r1=bobRadius(),r2=clamp(.038*Math.cbrt(s.m2/200),.023,.076);
- const available=Math.max(.20,limitHeight-base-margin-(s.second?Math.max(r1,r2):r1));
+ const available=Math.max(.20,limitHeight-(.76+.684)-margin-(s.second?Math.max(r1,r2):r1));
  // The entire vertical two-link chain, plus the bob radius, must fit under the cap.
  if(s.second){
   if(which==='L2'){s.L2=Math.min(s.L2,Math.max(.05,available-s.L));s.L=Math.min(s.L,Math.max(.15,available-s.L2));}
