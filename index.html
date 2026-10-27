@@ -146,18 +146,19 @@ const snapshotUnit=()=>Object.fromEntries(UNIT_KEYS.map(k=>[k,k==='track'?s.trac
 unitStates.push(snapshotUnit());
 function persistActive(){Object.assign(unitStates[activeUnit],snapshotUnit())}
 function runUnit(index,fn){
- // Isolate both physics parameters and the geometric pivot for every stand.
- // The previous implementation restored s but leaked the most recently drawn pivot.
- const original=snapshotUnit(), originalPivot=pivot.slice(),originalPlate=plateZ;
- if(index!==activeUnit)Object.assign(s,unitStates[index]);
- const M=apparatusMetrics();
- pivot=[0,M.pivotY,M.pivotZ];plateZ=M.pivotZ;
+ // Preserve the newly integrated state of the selected apparatus.
+ // Only temporarily switched (non-active) apparatuses must be restored.
+ const isActive=index===activeUnit;
+ const original=isActive?null:snapshotUnit(), originalPivot=pivot.slice(),originalPlate=plateZ;
+ if(!isActive)Object.assign(s,unitStates[index]);
  try {
+  const M=apparatusMetrics();
+  pivot=[0,M.pivotY,M.pivotZ];plateZ=M.pivotZ;
   const result=fn();
   Object.assign(unitStates[index],snapshotUnit());
   return result;
  } finally {
-  Object.assign(s,original);
+  if(!isActive)Object.assign(s,original);
   pivot=originalPivot;plateZ=originalPlate;
  }
 }
