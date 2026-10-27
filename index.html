@@ -231,31 +231,28 @@ function rebuildStatic(){
 }
 function addPenPlotter(){
  if(!s.plotter||s.t<=0)return;
- // The moving paper runs from below the bob toward the observer (+Z).
- // x = horizontal bob displacement, z = elapsed time; both are visualized in 3D.
- const originZ=.13,startZ=.30,timeScale=.19,paperY=.794;
- const seconds=Math.min(15,s.t),endZ=startZ+seconds*timeScale,depth=Math.max(.02,endZ-originZ);
- const halfWidth=.72;
- box(0,paperY,originZ+depth/2,halfWidth*2,.003,depth,'#fffdf8');
- // The paper and plotted trace occupy the top of the experimental table and extend forward.
- const xScale=Math.min(1,halfWidth/Math.max(.3,s.L+(s.second?s.L2:0)));
- for(let j=0;j<=Math.floor(seconds);j++){
-  const z=startZ+j*timeScale;
-  line([-.67,paperY+.004,z],[.67,paperY+.004,z],.0012,'#d4d4d4');
-  for(let k=-6;k<=6;k++)line([k*.10,paperY+.004,z-.025],[k*.10,paperY+.004,z+.025],.0008,'#e1e1e1');
+ // The pen remains at the bob's X/Z projection; only the paper is fed toward +Z.
+ const paperY=.794,penZ=pivot[2]+.016,feed=.19,maxPaperLength=1.25;
+ const elapsed=Math.min(s.t,maxPaperLength/feed),paperLength=Math.max(.018,elapsed*feed);
+ const halfWidth=Math.max(.72,Math.min(1000,s.L+(s.second?s.L2:0)+.10));
+ box(0,paperY,penZ+paperLength/2,halfWidth*2,.003,paperLength,'#fffdf8');
+ const plotTop=paperY+.006;
+ for(let sec=0;sec<=Math.floor(elapsed);sec++){
+   const z=penZ+(elapsed-sec)*feed;
+   line([-halfWidth+.04,plotTop,z],[halfWidth-.04,plotTop,z],.0011,'#c5cacf');
+   for(let k=-5;k<=5;k++){const x=k*(halfWidth-.08)/5;line([x,plotTop,z-.018],[x,plotTop,z+.018],.0007,'#d9dce0');}
  }
- const samples=s.track.filter((q,i)=>i%Math.max(1,Math.floor(s.track.length/350))===0&&q.t<=seconds);
- for(let j=1;j<samples.length;j++){
-  const a=samples[j-1],b=samples[j];
-  line([clamp(a.x*xScale,-halfWidth,halfWidth),paperY+.007,startZ+a.t*timeScale],
-       [clamp(b.x*xScale,-halfWidth,halfWidth),paperY+.007,startZ+b.t*timeScale],.0026,'#222c37');
+ const stride=Math.max(1,Math.floor(s.track.length/400));
+ const samples=s.track.filter((q,k)=>q.t<=elapsed&&k%stride===0);
+ const plotX=q=>clamp(q.x,-halfWidth+.025,halfWidth-.025);
+ for(let k=1;k<samples.length;k++){
+   const a=samples[k-1],b=samples[k];
+   line([plotX(a),plotTop+.004,penZ+(elapsed-a.t)*feed],
+        [plotX(b),plotTop+.004,penZ+(elapsed-b.t)*feed],.0028,'#222c37');
  }
- const nowX=clamp(s.L*Math.sin(s.theta)*xScale,-halfWidth,halfWidth);
- const nowZ=endZ;
- const penBase=[s.L*Math.sin(s.theta),Math.max(paperY+.04,bob[1]),bob[2]];
- // Pen follows the vertical projection of the bob onto the translating paper.
- line([nowX,paperY+.007,nowZ],[nowX,paperY+.075,nowZ],.005,'#333');
- ball([nowX,paperY+.009,nowZ],.007,'#222');
+ const penX=clamp(bob[0],-halfWidth+.025,halfWidth-.025),tip=[penX,plotTop+.004,penZ];
+ line([penX,Math.max(bob[1]-.01,plotTop+.055),penZ],tip,.0045,'#353535');
+ ball(tip,.006,'#252525');
 }
 function rebuildDynamicUnit(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
 // dotted arc uses short segments; exactly in the XY plane
@@ -370,9 +367,9 @@ function drawPlotterTimeLabels(){
  const w=labelCanvas.width,h=labelCanvas.height,ctx=labelctx;
  ctx.save();ctx.font='bold 12px sans-serif';ctx.fillStyle='#444';ctx.textAlign='center';
  for(let i=0;i<unitStates.length;i++){
-  const q=unitStates[i],seconds=Math.min(15,q.t);
+  const q=unitStates[i],seconds=Math.min(1.25/.19,q.t);
   for(let sec=0;sec<=Math.floor(seconds);sec++){
-   const p=project([unitOffset(i)+.57,.80,.30+sec*.19],lastVP);
+   const p=project([unitOffset(i)+.57,.80,.094+(seconds-sec)*.19],lastVP);
    if(!p||p[2]<-1||p[2]>1)continue;
    const x=(p[0]+1)*w/2,y=(1-p[1])*h/2;
    if(x<10||y<10||x>w-10||y>h-10)continue;
