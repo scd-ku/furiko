@@ -21,7 +21,7 @@
 
 .stage:fullscreen{width:100vw;height:100vh;border-radius:0;background:#fff}.stage:fullscreen #gl{width:100%;height:100%}.stage:fullscreen .viewbuttons{top:18px;right:18px}
 .playbackPanel{margin-top:15px;border-top:1px solid #ddd;padding-top:12px;display:grid;gap:10px}.playbackPanel label{font-size:12px;font-weight:700}.playbackPanel select{width:100%;background:#fff;border:1px solid #555;border-radius:5px;padding:8px;color:#222}.playbackPanel small{color:#666;line-height:1.6}.stage #gl{cursor:grab}.stage.draggingBob #gl{cursor:grabbing}
-.fullscreenPlayback{display:none;position:absolute;z-index:12;left:50%;bottom:60px;transform:translateX(-50%);align-items:center;justify-content:center;gap:10px;padding:12px 16px;background:#fff;border:1px solid #333;border-radius:9px;max-width:calc(100% - 28px);flex-wrap:wrap}.stage:fullscreen .fullscreenPlayback{display:flex}.fullscreenPlayback button,.fullscreenPlayback select{color:#222;background:white;border:1px solid #333;border-radius:5px;padding:8px 12px;font-weight:700;box-shadow:2px 2px 0 #333;cursor:pointer}.fullscreenPlayback label,.fullscreenHint{color:#444;font-size:12px;font-weight:600}@media(max-width:750px){.fullscreenPlayback{bottom:55px;left:10px;right:10px;transform:none}.fullscreenHint{display:none}}.apparatusTabs{display:flex;gap:5px;margin:12px 0 6px}.apparatusTabs button,.apparatusTools button{background:#fff;color:#222;border:1px solid #444;padding:7px 9px;border-radius:5px;cursor:pointer;font-size:12px;box-shadow:2px 2px 0 #222}.apparatusTabs button.selected{background:#252525;color:#fff}.apparatusTools{display:flex;gap:9px;margin-bottom:17px;flex-wrap:wrap}.apparatusTools button{font-size:11px}.apparatusTools button:disabled{opacity:.35;cursor:default;box-shadow:none}</style>
+.fullscreenPlayback{display:none;position:absolute;z-index:12;left:50%;bottom:60px;transform:translateX(-50%);align-items:center;justify-content:center;gap:10px;padding:12px 16px;background:#fff;border:1px solid #333;border-radius:9px;max-width:calc(100% - 28px);flex-wrap:wrap}.stage:fullscreen .fullscreenPlayback{display:flex}.fullscreenPlayback button,.fullscreenPlayback select{color:#222;background:white;border:1px solid #333;border-radius:5px;padding:8px 12px;font-weight:700;box-shadow:2px 2px 0 #333;cursor:pointer}.fullscreenPlayback label,.fullscreenHint{color:#444;font-size:12px;font-weight:600}@media(max-width:750px){.fullscreenPlayback{bottom:55px;left:10px;right:10px;transform:none}.fullscreenHint{display:none}}.apparatusTabs{display:flex;gap:5px;margin:12px 0 6px}.apparatusTabs button,.apparatusTools button{background:#fff;color:#222;border:1px solid #444;padding:7px 9px;border-radius:5px;cursor:pointer;font-size:12px;box-shadow:2px 2px 0 #222}.apparatusTabs button.selected{background:#252525;color:#fff}.apparatusTools{display:flex;gap:9px;margin-bottom:17px;flex-wrap:wrap}.apparatusTools button{font-size:11px}.apparatusTools button:disabled{opacity:.35;cursor:default;box-shadow:none}.graphVisibility{display:flex;flex-wrap:wrap;gap:7px 13px;margin:10px 0}.graphVisibility label{font-size:11px;font-weight:700;display:inline-flex;align-items:center;gap:4px;color:#383838}.graphVisibility input{accent-color:#444}.graphSwatch{display:inline-block;width:18px;height:4px;border-radius:1px}</style>
 </head>
 <body>
 <header><div class="brand"><button class="logo" id="qrOpen" type="button" aria-label="QRコードを表示" title="公開URLのQRコード"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2 2h8v8H2V2zm2 2v4h4V4H4zm10-2h8v8h-8V2zm2 2v4h4V4h-4zM2 14h8v8H2v-8zm2 2v4h4v-4H4zm10-2h3v3h-3v-3zm5 0h3v3h-3v-3zm-5 5h3v3h-3v-3zm5 0h3v3h-3v-3z"/></svg></button><div><strong>振り子の実験室</strong></div></div><div class="headerEnd"><span class="tag">単振り子・二重振り子の3Dシミュレーション</span><button class="helpTrigger" id="helpOpen" type="button">? ヘルプ</button></div></header>
@@ -48,7 +48,7 @@
 <div class="viewbuttons"><button type="button" id="fullscreenBtn" title="振り子画面を全画面表示">⛶ 全画面</button><button data-view="front" class="active">正面</button><button data-view="diagonal">斜め</button><button data-view="top">俯瞰</button><button data-view="room">理科室</button></div>
 <div class="fullscreenPlayback" aria-label="全画面の再生操作"><button id="fsPlay" type="button">▶ 再生</button><button id="fsBack" type="button">◀ 1コマ</button><button id="fsNext" type="button">1コマ ▶</button><label for="fsRate">再生速度</label><select id="fsRate"><option value="0.05">0.05×</option><option value="0.1">0.1×</option><option value="0.25">0.25×</option><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option></select><span class="fullscreenHint">錘をドラッグして角度を設定</span></div><div class="stageOverlay lowerLeft">初期視点：着席視点　｜　ドラッグ：視点回転　｜　Shift+ドラッグ / 右ドラッグ：平行移動　｜　ホイール：拡大・縮小</div><div class="stageOverlay lowerRight">現在角度 <b id="thetaLive">+25.0°</b></div></section>
 <aside class="side right"><section class="panel"><h2>測定値 <span id="status" class="status">停止中</span></h2><div class="statusGrid"><div class="stat"><label>角度 θ</label><strong id="thetaRead">+25.0</strong><small>°</small></div><div class="stat"><label>経過時間</label><strong id="timeRead">0.00</strong><small>s</small></div><div class="stat"><label>周期 T</label><strong id="periodRead">1.65</strong><small>s</small></div><div class="stat"><label>振動数 f</label><strong id="frequencyRead">0.61</strong><small>Hz</small></div></div></section>
-<section class="panel"><h2>運動のグラフ <select id="graphMode" class="buttonSmall"><option value="angle">角度 − 時間</option><option value="speed">角速度 − 時間</option><option value="energy">全力学的エネルギー</option><option value="path">水平位置 − 時間</option></select></h2><div class="chartbox"><canvas id="graph"></canvas></div><div style="text-align:right;margin-top:9px"><button id="csv" class="buttonSmall">CSVで測定値を保存</button></div></section>
+<section class="panel"><h2>運動のグラフ <select id="graphMode" class="buttonSmall"><option value="angle">角度 − 時間</option><option value="speed">角速度 − 時間</option><option value="energy">全力学的エネルギー</option><option value="path">水平位置 − 時間</option></select></h2><div id="graphVisibility" class="graphVisibility" aria-label="実験器別のグラフ表示"></div><div class="chartbox"><canvas id="graph"></canvas></div><div style="text-align:right;margin-top:9px"><button id="csv" class="buttonSmall">CSVで測定値を保存</button></div></section>
 <section class="panel"><h2>振り子の運動</h2><div class="details">大きく振っても計算できる<strong>非線形運動方程式</strong>を数値積分しています。<p style="font:16px Georgia,serif;text-align:center;margin:9px 0">d²θ/dt² = −(g/L) sin θ</p>単振り子と二重振り子を切替可能です。二重振り子では質量・長さ・初期角度によって連成運動が変化し、一般に周期は一定になりません。</div></section><div class="footer">Science Communication Design Laboratory · Kagawa University</div></aside>
 </main>
 <div class="dialogLayer" id="qrDialog" hidden role="dialog" aria-modal="true" aria-labelledby="qrTitle"><div class="dialogBox qrBox"><div class="dialogTop"><h2 id="qrTitle">アプリのQRコード</h2><button class="dialogClose" data-dismiss="qrDialog">閉じる ×</button></div><img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=12&data=https%3A%2F%2Fscd-ku.github.io%2Ffuriko%2F" alt="https://scd-ku.github.io/furiko/ のQRコード" /><p><a href="https://scd-ku.github.io/furiko/" target="_blank" rel="noopener">https://scd-ku.github.io/furiko/</a></p><p class="note">QRコードの取得にはインターネット接続が必要です。</p></div></div>
@@ -164,12 +164,28 @@ function runUnit(index,fn){
 }
 const unitOffset=i=>unitStates.length===1?0:(i-(unitStates.length-1)/2)*2.05;
 function shiftMeshX(x){for(let i=0;i<mesh.length;i+=9)mesh[i]+=x}
+// Same color for each instrument's graph and pen-plotter, including both bobs.
+const PLOT_COLORS=[['#2563c9','#9c4cc7'],['#d56c20','#168a77'],['#bd3757','#82711f']];
+const graphVisible=[[true,true],[true,true],[true,true]];
+function updateGraphVisibility(){
+ const root=document.getElementById('graphVisibility');
+ root.innerHTML='';
+ for(let i=0;i<unitStates.length;i++){
+  for(let j=0;j<(unitStates[i].second?2:1);j++){
+   const label=document.createElement('label'),input=document.createElement('input'),swatch=document.createElement('span');
+   input.type='checkbox';input.checked=graphVisible[i][j];input.addEventListener('change',()=>{graphVisible[i][j]=input.checked;drawGraph()});
+   swatch.className='graphSwatch';swatch.style.backgroundColor=PLOT_COLORS[i][j];
+   label.append(input,swatch,document.createTextNode((i+1)+'台目 おもり'+(j+1)));root.append(label);
+  }
+ }
+}
 function refreshUnitTabs(){
  const root=document.getElementById('apparatusTabs');
  root.innerHTML=unitStates.map((_,i)=>'<button type="button" data-unit="'+i+'" class="'+(i===activeUnit?'selected':'')+'">'+(i+1)+'台目</button>').join('');
  root.querySelectorAll('[data-unit]').forEach(btn=>btn.onclick=()=>selectUnit(Number(btn.dataset.unit)));
  document.getElementById('addApparatus').disabled=unitStates.length>=3;
  document.getElementById('removeApparatus').disabled=unitStates.length===1;
+ updateGraphVisibility();
 }
 function selectUnit(i){
  persistActive();activeUnit=i;Object.assign(s,unitStates[i]);pivot[0]=unitOffset(i);
@@ -244,15 +260,19 @@ function addPenPlotter(){
  }
  const stride=Math.max(1,Math.floor(s.track.length/1600));
  const samples=s.track.filter((q,k)=>q.t<=elapsed&&k%stride===0);
- const plotX=q=>clamp(q.x,-halfWidth+.025,halfWidth-.025);
- for(let k=1;k<samples.length;k++){
-   const a=samples[k-1],b=samples[k];
-   line([plotX(a),plotTop+.004,penZ+(elapsed-a.t)*feed],
-        [plotX(b),plotTop+.004,penZ+(elapsed-b.t)*feed],.0028,'#222c37');
+ const plotX=(q,j)=>clamp(j===0?q.x:q.x2,-halfWidth+.025,halfWidth-.025);
+ const plotUnit=windowPlotUnit;
+ const colors=PLOT_COLORS[plotUnit] || PLOT_COLORS[0];
+ for(let j=0;j<(s.second?2:1);j++){
+  for(let k=1;k<samples.length;k++){
+   const a=samples[k-1],b=samples[k],z1=penZ+(elapsed-a.t)*feed,z2=penZ+(elapsed-b.t)*feed;
+   line([plotX(a,j),plotTop+.004+j*.003,z1],[plotX(b,j),plotTop+.004+j*.003,z2],.0028,colors[j]);
+  }
  }
  const penX=clamp(bob[0],-halfWidth+.025,halfWidth-.025),tip=[penX,plotTop+.004,penZ];
  line([penX,Math.max(bob[1]-.01,plotTop+.055),penZ],tip,.0045,'#353535');
- ball(tip,.006,'#252525');
+ ball(tip,.006,colors[0]);
+ if(s.second){const endX=clamp(bob[0]+s.L2*Math.sin(s.theta2),-halfWidth+.025,halfWidth-.025);line([endX,plotTop+.07,penZ],[endX,plotTop+.008,penZ],.0045,colors[1]);ball([endX,plotTop+.009,penZ],.006,colors[1]);}
 }
 function rebuildDynamicUnit(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
 // dotted arc uses short segments; exactly in the XY plane
@@ -272,10 +292,11 @@ if(s.second){const end=[bob[0]+s.L2*Math.sin(s.theta2),bob[1]-s.L2*Math.cos(s.th
 }
 
 addPenPlotter();dynamicCount=upload(dynamicBuf)}
+let windowPlotUnit=0;
 function rebuildDynamic(){
  persistActive();const all=[];
  for(let i=0;i<unitStates.length;i++){
-  runUnit(i,()=>{pivot[0]=0;rebuildDynamicUnit();shiftMeshX(unitOffset(i));for(let k=0;k<mesh.length;k++)all.push(mesh[k])});
+  runUnit(i,()=>{windowPlotUnit=i;pivot[0]=0;rebuildDynamicUnit();shiftMeshX(unitOffset(i));for(let k=0;k<mesh.length;k++)all.push(mesh[k])});
  }
  mesh=all;dynamicCount=upload(dynamicBuf);{const M=apparatusMetrics();pivot=[unitOffset(activeUnit),M.pivotY,M.pivotZ];plateZ=M.pivotZ;}
 }
@@ -459,7 +480,7 @@ function updateFullscreenText(){$('fullscreenBtn').textContent=document.fullscre
 $('fullscreenBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await stageElement.requestFullscreen()}catch(e){alert('全画面表示を開始できません: '+e.message)}});
 document.addEventListener('fullscreenchange',()=>{updateFullscreenText();syncFullscreenPlayback()});
 
-$('doubleEnabled').addEventListener('change',e=>{s.second=e.target.checked;$('secondParams').hidden=!s.second;enforceLimit();reset();dirty=true;buildRoom()});
+$('doubleEnabled').addEventListener('change',e=>{s.second=e.target.checked;$('secondParams').hidden=!s.second;enforceLimit();reset();dirty=true;buildRoom();persistActive();updateGraphVisibility()});
 for(const [id,key,min,max,round] of [['length2','L2',.05,999,.01],['mass2','m2',20,1000,10],['angle2','a02',-80,80,1]]){for(const kind of ['', 'Num'])$(id+kind).addEventListener(kind?'change':'input',e=>{const n=+e.target.value;if(!Number.isFinite(n))return;s[key]=Math.round(clamp(n,min,max)/round)*round;enforceLimit(key);reset();dirty=true;buildRoom()})}
 $('start').onclick=()=>{s.playing=!s.playing;$('start').textContent=s.playing?'Ⅱ 一時停止':'▶ 再開';$('status').textContent=s.playing?'実験中':'一時停止中';syncFullscreenPlayback()};$('reset').onclick=reset;
 for(const [id,key] of [['trajectory','trajectory'],['angleArc','angleArc'],['roomToggle','room'],['plotterToggle','plotter']])$(id).onchange=e=>s[key]=e.target.checked;
@@ -514,13 +535,28 @@ const K=.5*(m+n)*L*L*u*u+.5*n*l*l*v*v+n*L*l*u*v*Math.cos(delta);
 const U=(m+n)*9.80665*L*(1-Math.cos(s.theta))+n*9.80665*l*(1-Math.cos(s.theta2));
 s.track.push({t:s.t,angle:s.theta/RAD,angle2:s.theta2/RAD,velocity:s.omega/RAD,velocity2:s.omega2/RAD,x:L*Math.sin(s.theta),x2:L*Math.sin(s.theta)+l*Math.sin(s.theta2),energy:K+U});if(s.track.length>10000)s.track.splice(0,1000)}}
 function updateStats(){$('thetaRead').textContent=(s.theta>=0?'+':'')+(s.theta/RAD).toFixed(1);$('thetaLive').textContent=(s.theta>=0?'+':'')+(s.theta/RAD).toFixed(1)+'°';$('timeRead').textContent=s.t.toFixed(2);let T=getPeriod();$('periodRead').textContent=s.second?'—':T.toFixed(2);$('frequencyRead').textContent=s.second?'—':(1/T).toFixed(3)}
-function drawGraph(){const c=graph.getContext('2d'),[w,h]=resize(graph),mode=$('graphMode').value,l=40,t=14,r=12,b=29,pw=w-l-r,ph=h-t-b;c.clearRect(0,0,w,h);c.fillStyle='#fff';c.fillRect(0,0,w,h);
-const time0=Math.max(0,s.t-12),time1=time0+12,rows=s.track.filter(q=>q.t>=time0&&q.t<=time1);const ky=mode==='angle'?'angle':mode==='speed'?'velocity':mode==='path'?'x':'energy',ky2=mode==='angle'?'angle2':mode==='speed'?'velocity2':mode==='path'?'x2':null;
-let values=rows.flatMap(q=>ky2&&s.second?[q[ky],q[ky2]]:[q[ky]]);let bound=mode==='angle'?Math.max(30,s.a0*1.5,Math.abs(s.a02)*1.5):mode==='speed'?Math.max(50,...values.map(Math.abs)):mode==='path'?Math.max(1,s.L+s.L2,...values.map(Math.abs)):Math.max(.1,...values);bound=Number.isFinite(bound)?bound:1;const ymin=mode==='energy'?0:-bound,ymax=bound;
-const X=x=>l+(x-time0)/12*pw,Y=y=>t+(ymax-y)/(ymax-ymin)*ph;
-c.font='11px sans-serif';c.textAlign='right';c.fillStyle='#66716f';c.strokeStyle='#e5e5e5';c.lineWidth=1;for(let i=0;i<=4;i++){let y=t+i*ph/4;c.beginPath();c.moveTo(l,y);c.lineTo(w-r,y);c.stroke();c.fillText((ymax-(ymax-ymin)*i/4).toFixed(mode==='energy'?2:0),l-5,y+3)}c.textAlign='center';for(let i=0;i<=6;i++){let x=l+pw*i/6;c.beginPath();c.moveTo(x,t);c.lineTo(x,t+ph);c.stroke();c.fillText((time0+i*2).toFixed(0),x,h-10)}
-for(const [key,col] of [[ky,'#2563c9'],[ky2,'#9c4cc7']]){if(!key||key===ky2&&!s.second)continue;c.strokeStyle=col;c.lineWidth=2.1;c.beginPath();let first=true;for(const q of rows){const x=X(q.t),y=Y(q[key]);if(first){c.moveTo(x,y);first=false}else c.lineTo(x,y)}if(!first)c.stroke()}
-if(s.second && ky2){c.fillStyle='#2563c9';c.textAlign='left';c.fillText('● 錘1',l+7,t+12);c.fillStyle='#9c4cc7';c.fillText('● 錘2',l+65,t+12)}}
+function drawGraph(){
+ const c=graph.getContext('2d'),[w,h]=resize(graph),mode=$('graphMode').value,l=44,top=14,r=12,b=29,pw=w-l-r,ph=h-top-b;
+ c.clearRect(0,0,w,h);c.fillStyle='#fff';c.fillRect(0,0,w,h);
+ const ky=mode==='angle'?'angle':mode==='speed'?'velocity':mode==='path'?'x':'energy';
+ const ky2=mode==='angle'?'angle2':mode==='speed'?'velocity2':mode==='path'?'x2':null;
+ const maxTime=Math.max(0,...unitStates.map(u=>u.t)),time0=Math.max(0,maxTime-12),time1=time0+12;
+ const series=[];
+ for(let i=0;i<unitStates.length;i++){
+  const unit=unitStates[i],rows=unit.track.filter(q=>q.t>=time0&&q.t<=time1);
+  if(graphVisible[i][0])series.push({rows,key:ky,color:PLOT_COLORS[i][0]});
+  if(unit.second&&ky2&&graphVisible[i][1])series.push({rows,key:ky2,color:PLOT_COLORS[i][1]});
+ }
+ const values=series.flatMap(s=>s.rows.map(q=>q[s.key]).filter(Number.isFinite));
+ const absMax=Math.max(0,...values.map(Math.abs));
+ const bound=mode==='angle'?Math.max(30,absMax*1.15):mode==='speed'?Math.max(50,absMax*1.15):mode==='path'?Math.max(1,absMax*1.1):Math.max(.1,...values);
+ const ymin=mode==='energy'?0:-bound,ymax=bound;
+ const X=x=>l+(x-time0)/12*pw,Y=y=>top+(ymax-y)/(ymax-ymin)*ph;
+ c.font='11px sans-serif';c.textAlign='right';c.fillStyle='#66716f';c.strokeStyle='#e5e5e5';c.lineWidth=1;
+ for(let k=0;k<=4;k++){let y=top+k*ph/4;c.beginPath();c.moveTo(l,y);c.lineTo(w-r,y);c.stroke();c.fillText((ymax-(ymax-ymin)*k/4).toFixed(mode==='energy'?2:0),l-5,y+3)}
+ c.textAlign='center';for(let k=0;k<=6;k++){let x=l+pw*k/6;c.beginPath();c.moveTo(x,top);c.lineTo(x,top+ph);c.stroke();c.fillText((time0+k*2).toFixed(0),x,h-10)}
+ for(const lineData of series){c.strokeStyle=lineData.color;c.lineWidth=2.3;c.beginPath();let first=true;for(const q of lineData.rows){let y=q[lineData.key];if(!Number.isFinite(y))continue;const x=X(q.t);if(first){c.moveTo(x,Y(y));first=false}else c.lineTo(x,Y(y))}if(!first)c.stroke()}
+}
 $('csv').onclick=()=>{if(!s.track.length){alert('開始して測定値を記録してください。');return}let lines=['time_s,angle1_deg,angle2_deg,angular_velocity1_deg_s,angular_velocity2_deg_s,x1_m,x2_m,total_energy_J'];for(let q of s.track)lines.push([q.t.toFixed(4),q.angle.toFixed(5),q.angle2.toFixed(5),q.velocity.toFixed(5),q.velocity2.toFixed(5),q.x.toFixed(5),q.x2.toFixed(5),q.energy.toFixed(6)].join(','));let u=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=u;a.download='pendulum_science_lab.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)};
 let last=0,elapsed=0;function frame(t){requestAnimationFrame(frame);if(!gl&&t-last<55)return;let dt=Math.min(gl?.06:.32,Math.max(0,(t-last)/1000));last=t;if(s.playing){elapsed+=dt*playRate;let k=0;while(elapsed>=stepFrame&&k++<120){advanceFrame();elapsed-=stepFrame}}else elapsed=0;
 if(dirty)rebuildStatic();render();updateStats();drawGraph()}
