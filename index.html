@@ -241,12 +241,12 @@ function drawVelocityOverlay(){
   const b2=[b1[0]+s.L2*Math.sin(s.theta2),b1[1]-s.L2*Math.cos(s.theta2),b1[2]];
   items.push([b2,vx1+s.L2*s.omega2*Math.cos(s.theta2),vy1+s.L2*s.omega2*Math.sin(s.theta2)]);
  }
- const ctx=labelctx;ctx.save();ctx.font='bold 19px sans-serif';ctx.textBaseline='middle';ctx.lineWidth=3;
+ const ctx=labelctx;ctx.save();ctx.font='bold 24px sans-serif';ctx.textBaseline='middle';ctx.lineWidth=3;
  const drawArrow=(sx,sy,dx,dy,caption,color)=>{
   const ex=sx+dx,ey=sy+dy,angle=Math.atan2(dy,dx);
-  ctx.strokeStyle='#fff';ctx.lineWidth=10;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-  ctx.strokeStyle=color;ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
-  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-17*Math.cos(angle-.45),ey-17*Math.sin(angle-.45));ctx.lineTo(ex-17*Math.cos(angle+.45),ey-17*Math.sin(angle+.45));ctx.fill();
+  ctx.strokeStyle='#fff';ctx.lineWidth=13;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+  ctx.strokeStyle=color;ctx.lineWidth=7;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ex,ey);ctx.stroke();
+  ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-21*Math.cos(angle-.45),ey-21*Math.sin(angle-.45));ctx.lineTo(ex-17*Math.cos(angle+.45),ey-17*Math.sin(angle+.45));ctx.fill();
   ctx.fillStyle='#222';ctx.strokeStyle='#fff';ctx.lineWidth=4;const tx=ex+8,ty=ey-14;ctx.strokeText(caption,tx,ty);ctx.fillText(caption,tx,ty);
  };
  for(const [index,item] of items.entries()){
