@@ -164,7 +164,7 @@ function refreshUnitTabs(){
  document.getElementById('removeApparatus').disabled=unitStates.length===1;
 }
 function selectUnit(i){
- persistActive();activeUnit=i;Object.assign(s,unitStates[i]);
+ persistActive();activeUnit=i;Object.assign(s,unitStates[i]);pivot[0]=unitOffset(i);
  enforceLimit('L');readParams();resetUnitDisplay();refreshUnitTabs();dirty=true;
 }
 function resetUnitDisplay(){document.getElementById('doubleEnabled').checked=s.second;document.getElementById('secondParams').hidden=!s.second;document.getElementById('angle').value=s.a0;document.getElementById('angleNum').value=s.a0;updateStats()}
@@ -223,7 +223,7 @@ function rebuildStatic(){
  persistActive();
  const all=[];
  for(let i=0;i<unitStates.length;i++){
-  runUnit(i,()=>{rebuildStaticUnit();shiftMeshX(unitOffset(i));all.push(...mesh)});
+  runUnit(i,()=>{rebuildStaticUnit();shiftMeshX(unitOffset(i));for(let k=0;k<mesh.length;k++)all.push(mesh[k])});
  }
  mesh=all;staticCount=upload(staticBuf);dirty=false;
  pivot[0]=unitOffset(activeUnit);
@@ -432,7 +432,9 @@ function clampIndoorCamera(){
  camera.ty=clamp(camera.ty,.9,1.85);camera.pitch=clamp(camera.pitch,-.14,.22);
  camera.yaw=clamp(camera.yaw,-.25,.25);camera.dist=clamp(camera.dist,1.0,2.8);
 }
-let moving=false,moveMode='orbit',moved=[0,0];glCanvas.addEventListener('contextmenu',e=>e.preventDefault());glCanvas.addEventListener('pointerdown',e=>{if(!(e.button===0||e.button===1||e.button===2))return;grabbedBob=0;const rect=glCanvas.getBoundingClientRect();if(e.button===0&&!e.shiftKey){const clickX=e.clientX-rect.left,clickY=e.clientY-rect.top;const candidates=bobCoordinates().slice(0,s.second?2:1);for(let i=candidates.length-1;i>=0;i--){const p=screenPoint(candidates[i]);if(p&&Math.hypot(p[0]-clickX,p[1]-clickY)<Math.max(38,Math.min(95,glCanvas.clientWidth*.055))){grabbedBob=i+1;break;}}}moveMode=grabbedBob?'bob':(e.button===2||e.shiftKey)?'pan':'orbit';if(grabbedBob){pauseForEdit();history.length=0;glCanvas.parentElement.classList.add('draggingBob')}moving=true;moved=[e.clientX,e.clientY];glCanvas.setPointerCapture(e.pointerId)});
+function allBobTargets(){const targets=[];for(let i=0;i<unitStates.length;i++){const q=i===activeUnit?s:unitStates[i],x=unitOffset(i),h=apparatusPivotHeight(q);const px=x,py=h,pz=pivot[2]+.016;const x1=px+q.L*Math.sin(q.theta),y1=py-q.L*Math.cos(q.theta);targets.push({unit:i,bob:1,pos:[x1,y1,pz]});if(q.second)targets.push({unit:i,bob:2,pos:[x1+q.L2*Math.sin(q.theta2),y1-q.L2*Math.cos(q.theta2),pz]})}return targets}
+function apparatusPivotHeight(q){const r=Math.max(.023,Math.min(.076,.038*Math.cbrt(q.m/200))),r2=Math.max(.023,Math.min(.076,.038*Math.cbrt(q.m2/200)));const ext=Math.min((s.indoor?3:1000)-.76-.684,Math.max(0,q.L+(q.second?q.L2:0)-.60,(q.L+(q.second?q.L2+Math.max(r,r2):r)+.09)-.605,q.poleHeight-.76-.684));return .76+.605+ext}
+let moving=false,moveMode='orbit',moved=[0,0];glCanvas.addEventListener('contextmenu',e=>e.preventDefault());glCanvas.addEventListener('pointerdown',e=>{if(!(e.button===0||e.button===1||e.button===2))return;grabbedBob=0;const rect=glCanvas.getBoundingClientRect();if(e.button===0&&!e.shiftKey){const clickX=e.clientX-rect.left,clickY=e.clientY-rect.top;const candidates=allBobTargets();for(let i=candidates.length-1;i>=0;i--){const c=candidates[i],p=screenPoint(c.pos);if(p&&Math.hypot(p[0]-clickX,p[1]-clickY)<Math.max(38,Math.min(95,glCanvas.clientWidth*.055))){if(c.unit!==activeUnit)selectUnit(c.unit);grabbedBob=c.bob;break;}}}moveMode=grabbedBob?'bob':(e.button===2||e.shiftKey)?'pan':'orbit';if(grabbedBob){pauseForEdit();history.length=0;glCanvas.parentElement.classList.add('draggingBob')}moving=true;moved=[e.clientX,e.clientY];glCanvas.setPointerCapture(e.pointerId)});
 glCanvas.addEventListener('pointermove',e=>{if(!moving)return;let dx=e.clientX-moved[0],dy=e.clientY-moved[1];moved=[e.clientX,e.clientY];if(moveMode==='bob'){const centers=bobCoordinates(),center=grabbedBob===2?centers[0]:[pivot[0],pivot[1],pivot[2]+.016],polar=pointerPolar(e,center),ang=clamp(polar?polar.angle:pointerAngle(e,center),-80,80);if(polar){if(grabbedBob===1)s.L=Math.max(.15,Math.min(s.indoor?3:1000,Math.round(polar.length*100)/100));else s.L2=Math.max(.05,Math.min(s.indoor?3:999,Math.round(polar.length*100)/100));enforceLimit(grabbedBob===1?'L':'L2');dirty=true;buildRoom();}if(grabbedBob===1){s.theta=ang*RAD;s.a0=ang;$('angle').value=ang;$('angleNum').value=ang.toFixed(1)}else{s.theta2=ang*RAD;s.a02=ang;$('angle2').value=ang;$('angle2Num').value=ang.toFixed(1)}s.omega=0;s.omega2=0;s.t=0;s.track=[];dirty=true;}else if(moveMode==='orbit'){camera.yaw-=dx*.006;camera.pitch=clamp(camera.pitch+dy*.005,-.40,1.38)}else{const sPan=camera.dist*.0017, rx=Math.cos(camera.yaw), rz=-Math.sin(camera.yaw); camera.tx-=dx*sPan*rx; camera.tz-=dx*sPan*rz; camera.ty+=dy*sPan;}clampIndoorCamera();document.querySelectorAll('[data-view]').forEach(b=>b.classList.remove('active'))});glCanvas.addEventListener('pointerup',()=>{moving=false;grabbedBob=0;glCanvas.parentElement.classList.remove('draggingBob')});glCanvas.addEventListener('pointercancel',()=>{moving=false;grabbedBob=0;glCanvas.parentElement.classList.remove('draggingBob')});
 glCanvas.addEventListener('wheel',e=>{e.preventDefault();camera.dist=clamp(camera.dist*Math.exp(e.deltaY*.0012),0.55,2400);clampIndoorCamera()},{passive:false});
 function derivative(theta,omega){return [omega,-9.80665*Math.sin(theta)/s.L]}
