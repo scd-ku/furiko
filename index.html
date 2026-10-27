@@ -365,10 +365,26 @@ function drawVelocityOverlay(){
  }
  ctx.restore();
 }
+function drawPlotterTimeLabels(){
+ if(!s.plotter||!lastVP)return;
+ const w=labelCanvas.width,h=labelCanvas.height,ctx=labelctx;
+ ctx.save();ctx.font='bold 12px sans-serif';ctx.fillStyle='#444';ctx.textAlign='center';
+ for(let i=0;i<unitStates.length;i++){
+  const q=unitStates[i],seconds=Math.min(15,q.t);
+  for(let sec=0;sec<=Math.floor(seconds);sec++){
+   const p=project([unitOffset(i)+.57,.80,.30+sec*.19],lastVP);
+   if(!p||p[2]<-1||p[2]>1)continue;
+   const x=(p[0]+1)*w/2,y=(1-p[1])*h/2;
+   if(x<10||y<10||x>w-10||y>h-10)continue;
+   const label=sec+' s';ctx.lineWidth=3;ctx.strokeStyle='white';ctx.strokeText(label,x,y);ctx.fillText(label,x,y);
+  }
+ }
+ ctx.restore();
+}
 function render(){const [w,h]=resize(glCanvas);if(!w||!h)return;
 let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];let proj=perspective(48*RAD,w/h,.04,4000),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
 const openSky=roomNeedsOpenSky(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(openSky?.60:1.0,openSky?.80:1.0,openSky?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room)drawBuffer(roomBuf,roomCount);drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
-else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay()}
+else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels()}
 function renderSoftware(w,h){const ctx=canvas2d;
  const img=ctx.createImageData(w,h),pixels=img.data,depthBuf=new Float32Array(w*h);
  const sky=roomNeedsOpenSky();for(let i=0;i<w*h;i++){depthBuf[i]=1;pixels[i*4]=sky?153:255;pixels[i*4+1]=sky?204:255;pixels[i*4+2]=sky?250:255;pixels[i*4+3]=255}
