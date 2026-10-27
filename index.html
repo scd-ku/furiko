@@ -146,13 +146,20 @@ const snapshotUnit=()=>Object.fromEntries(UNIT_KEYS.map(k=>[k,k==='track'?s.trac
 unitStates.push(snapshotUnit());
 function persistActive(){Object.assign(unitStates[activeUnit],snapshotUnit())}
 function runUnit(index,fn){
- if(index===activeUnit){const result=fn();persistActive();return result}
- const saved=snapshotUnit();
- Object.assign(s,unitStates[index]);
- const result=fn();
- Object.assign(unitStates[index],snapshotUnit());
- Object.assign(s,saved);
- return result;
+ // Isolate both physics parameters and the geometric pivot for every stand.
+ // The previous implementation restored s but leaked the most recently drawn pivot.
+ const original=snapshotUnit(), originalPivot=pivot.slice(),originalPlate=plateZ;
+ if(index!==activeUnit)Object.assign(s,unitStates[index]);
+ const M=apparatusMetrics();
+ pivot=[0,M.pivotY,M.pivotZ];plateZ=M.pivotZ;
+ try {
+  const result=fn();
+  Object.assign(unitStates[index],snapshotUnit());
+  return result;
+ } finally {
+  Object.assign(s,original);
+  pivot=originalPivot;plateZ=originalPlate;
+ }
 }
 const unitOffset=i=>unitStates.length===1?0:(i-(unitStates.length-1)/2)*2.05;
 function shiftMeshX(x){for(let i=0;i<mesh.length;i+=9)mesh[i]+=x}
@@ -226,7 +233,7 @@ function rebuildStatic(){
   runUnit(i,()=>{rebuildStaticUnit();shiftMeshX(unitOffset(i));for(let k=0;k<mesh.length;k++)all.push(mesh[k])});
  }
  mesh=all;staticCount=upload(staticBuf);dirty=false;
- pivot[0]=unitOffset(activeUnit);
+ {const M=apparatusMetrics();pivot=[unitOffset(activeUnit),M.pivotY,M.pivotZ];plateZ=M.pivotZ;}
 }
 function rebuildDynamicUnit(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
 // dotted arc uses short segments; exactly in the XY plane
@@ -251,7 +258,7 @@ function rebuildDynamic(){
  for(let i=0;i<unitStates.length;i++){
   runUnit(i,()=>{pivot[0]=0;rebuildDynamicUnit();shiftMeshX(unitOffset(i));all.push(...mesh)});
  }
- mesh=all;dynamicCount=upload(dynamicBuf);pivot[0]=unitOffset(activeUnit);
+ mesh=all;dynamicCount=upload(dynamicBuf);{const M=apparatusMetrics();pivot=[unitOffset(activeUnit),M.pivotY,M.pivotZ];plateZ=M.pivotZ;}
 }
 function perspective(fovy,aspect,near,far){let f=1/Math.tan(fovy/2),q=1/(near-far);return[f/aspect,0,0,0,0,f,0,0,0,0,(far+near)*q,-1,0,0,2*far*near*q,0]}
 function lookAt(eye,target,up){let z=norm(sub(eye,target)),x=norm(cross(up,z)),y=cross(z,x);return [x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-x.reduce((s,e,i)=>s+e*eye[i],0),-y.reduce((s,e,i)=>s+e*eye[i],0),-z.reduce((s,e,i)=>s+e*eye[i],0),1]}
