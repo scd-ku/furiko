@@ -275,7 +275,7 @@ addPenPlotter();dynamicCount=upload(dynamicBuf)}
 function rebuildDynamic(){
  persistActive();const all=[];
  for(let i=0;i<unitStates.length;i++){
-  runUnit(i,()=>{pivot[0]=0;rebuildDynamicUnit();shiftMeshX(unitOffset(i));all.push(...mesh)});
+  runUnit(i,()=>{pivot[0]=0;rebuildDynamicUnit();shiftMeshX(unitOffset(i));for(let k=0;k<mesh.length;k++)all.push(mesh[k])});
  }
  mesh=all;dynamicCount=upload(dynamicBuf);{const M=apparatusMetrics();pivot=[unitOffset(activeUnit),M.pivotY,M.pivotZ];plateZ=M.pivotZ;}
 }
