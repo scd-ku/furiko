@@ -42,11 +42,9 @@
 <div class="param" style="padding-top:4px"><label class="check"><input type="checkbox" id="doubleEnabled">おもりをもう1個つなげる</label><div id="secondParams" hidden><div class="paramhead"><label for="length2">2本目のひもの長さ L₂</label><div class="number"><input id="length2Num" type="number" min="0.05" max="999" step="0.01" value="0.35"><span>m</span></div></div><input id="length2" class="range" type="range" min="0.05" max="999" step="0.01" value="0.35"><div class="paramhead"><label for="mass2">2つ目のおもりの重さ m₂</label><div class="number"><input id="mass2Num" type="number" min="20" max="1000" step="10" value="100"><span>g</span></div></div><input id="mass2" class="range" type="range" min="20" max="1000" step="10" value="100"><div class="paramhead"><label for="angle2">2本目の初期角度 θ₂</label><div class="number"><input id="angle2Num" type="number" min="-80" max="80" step="1" value="-15"><span>°</span></div></div><input id="angle2" class="range" type="range" min="-80" max="80" step="1" value="-15"><p class="tip" id="limitInfo">支柱の高さ1000mまで自動伸長。2本の長さと球の半径を考慮して制限します。</p></div></div></section>
 <section class="panel"><h2>表示設定 <span class="eyebrow">DISPLAY</span></h2>
 <label class="check"><input id="trajectory" type="checkbox" checked>振れ幅の軌跡</label><label class="check"><input id="plotterToggle" type="checkbox">ペンプロッタ（記録紙に振動を描く）</label>
-<label class="check"><input id="angleArc" type="checkbox">角度のガイド線</label>
 <label class="check"><input id="roomToggle" type="checkbox" checked>理科室を表示</label>
 <label class="check"><input id="indoorMode" type="checkbox" checked>屋内（支柱の高さ 3m以内）</label>
-<label class="check"><input id="velocityVectors" type="checkbox">錘の水平・鉛直速度を表示（km/h）</label><label class="check"><input id="showStringLength" type="checkbox">紐の長さを紐の上に表示</label><label class="check"><input id="showBobMass" type="checkbox">錘の質量を錘の上に表示</label>
-<div style="margin:14px 0 7px;font-size:11px;font-weight:700">分度器の形式</div><div class="radioBtns"><button id="bluePlate">青色 ±30°</button><button id="fullPlate" class="active">180°半円</button></div><p class="tip">180°半円と青色±30°の表示を切り替えます。</p></section>
+<label class="check"><input id="showMeasurements" type="checkbox">おもりの重さ・ひもの長さ・速度を表示</label></section>
 <section class="panel"><h2>実験上の注意</h2><div class="callout">長さを長くすると、おもりが机や台座に接触しないよう支柱が自動で上昇します。理科室の天井高は3.0mを基準にし、支柱がそれを超えると上空を青空表示に切り替えます。支柱側の定規は回転軸側を0として表示します。</div></section>
 
 </aside>
@@ -160,7 +158,7 @@ if(!openSky){box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7'); for(const z of [-6,-
 for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
 box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
 roomCount=upload(roomBuf)}
-const s={plotter:false,indoor:true,showVelocity:false,showStringLength:false,showBobMass:false,poleHeight:1.5,L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,angleArc:false,room:true,blue:false};
+const s={plotter:false,indoor:true,showMeasurements:false,poleHeight:1.5,L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,room:true};
 // Per-apparatus settings are independent; only the playback transport is shared.
 const UNIT_KEYS=['poleHeight','L','m','a0','theta','omega','second','L2','m2','a02','theta2','omega2','t','track'];
 const unitStates=[];
@@ -251,13 +249,19 @@ function rebuildStaticUnit(){mesh=[];labTable(0,0,true); // main experimental is
  line([scaleX,ty+.042,scaleZ],[scaleX,ty+.642+ext,scaleZ],.0021,'#f1f3f1');
  line([scaleX+.006,ty+.042,scaleZ+.002],[scaleX+.006,ty+.642+ext,scaleZ+.002],.0011,'#9ea8a8');
  const scaleSpan=.6+ext; let tickStep=scaleSpan<=2?.01:scaleSpan<=20?.1:scaleSpan<=200?1:10; let majorStep=scaleSpan<=2?.1:scaleSpan<=20?1:scaleSpan<=200?10:100; let midStep=majorStep/2; for(let d=0; d<=scaleSpan+1e-9; d+=tickStep){ let y=(M.pivotY-d); if(y<ty+.042-1e-6) break; let major=Math.abs((d/majorStep)-Math.round(d/majorStep))<1e-6; let mid=Math.abs((d/midStep)-Math.round(d/midStep))<1e-6; let len=major?.028:mid?.020:.012; line([scaleX,y,scaleZ+.006],[scaleX+len,y,scaleZ+.006], major?.0018:.0012, major?'#c95e66':'#b8c2bf'); }
- // semi-circular protractor centred on pivot plane
- const R=s.blue?.12:.122, maxD=s.blue?30:90, plateCol=s.blue?'#2da6d6':'#f6f7f5';
- plateSector(pivot[0],py,pivot[2],R,maxD,plateCol);
- for(let deg=-maxD;deg<=maxD;deg+=(s.blue?5:2)){ let major=(deg%10===0), mid=(!s.blue && deg%5===0); let inn=R-(major?.018:mid?.012:.008); let p=anglePoint(pivot[0],py,pivot[2]+.010,inn,deg*RAD), q=anglePoint(pivot[0],py,pivot[2]+.010,R-.003,deg*RAD); line(p,q,major?.0016:.0010,s.blue?'#eefbfd':(major?'#7b8586':'#a8b1b2')); }
- if(!s.blue){ for(let deg=-90;deg<=90;deg+=30){ let p=anglePoint(pivot[0],py,pivot[2]+.008,.04,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.008,R-.020,deg*RAD); line(p,q,.0010,'#d6dbd8'); } }
- else{ for(let deg=-30;deg<=30;deg+=10){ let p=anglePoint(pivot[0],py,pivot[2]+.010,.036,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.010,R-.026,deg*RAD); line(p,q,.0012,'#d7f1f6'); } }
- line([pivot[0],py,pivot[2]+.011],[pivot[0],py-R+.002,pivot[2]+.011],.0012,s.blue?'#f5fcfe':'#8e9998');
+ // Permanent 180-degree (±90°) semicircular protractor.
+ const R=.122, maxD=90;
+ plateSector(pivot[0],py,pivot[2],R,maxD,'#f6f7f5');
+ for(let deg=-90;deg<=90;deg+=2){
+  const major=deg%10===0,mid=deg%5===0,inn=R-(major?.018:mid?.012:.008);
+  const p=anglePoint(pivot[0],py,pivot[2]+.010,inn,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.010,R-.003,deg*RAD);
+  line(p,q,major?.0016:.0010,major?'#7b8586':'#a8b1b2');
+ }
+ for(let deg=-90;deg<=90;deg+=30){
+  const p=anglePoint(pivot[0],py,pivot[2]+.008,.04,deg*RAD),q=anglePoint(pivot[0],py,pivot[2]+.008,R-.020,deg*RAD);
+  line(p,q,.0010,'#d6dbd8');
+ }
+ line([pivot[0],py,pivot[2]+.011],[pivot[0],py-R+.002,pivot[2]+.011],.0012,'#8e9998');
  staticCount=upload(staticBuf);dirty=false}
 function rebuildStatic(){
  persistActive();
@@ -300,7 +304,6 @@ function addPenPlotter(){
 function rebuildDynamicUnit(){mesh=[];const a=s.theta,L=s.L;const pc=[pivot[0],pivot[1],pivot[2]+.016];bob=[pc[0]+L*Math.sin(a),pc[1]-L*Math.cos(a),pc[2]];
 // dotted arc uses short segments; exactly in the XY plane
 if(s.trajectory){let count=70;for(let i=0;i<count;i+=2){let t1=(-s.a0+2*s.a0*i/count)*RAD,t2=(-s.a0+2*s.a0*(i+1)/count)*RAD;let p=[pc[0]+L*Math.sin(t1),pc[1]-L*Math.cos(t1),pc[2]-.014],q=[pc[0]+L*Math.sin(t2),pc[1]-L*Math.cos(t2),pc[2]-.014];line(p,q,.0045,'#86ada1')}}
-if(s.angleArc){line(pc,[pc[0],pc[1]-.40,pc[2]+.008],.002,'#87a698');for(let i=0;i<26;i++){let a1=a*i/26,a2=a*(i+1)/26;line(anglePoint(pc[0],pc[1],pc[2]+.014,.24,a1),anglePoint(pc[0],pc[1],pc[2]+.014,.24,a2),.004,'#a7c87a')}}
 // World-space geometry expands with camera distance to maintain a minimum on-screen size.
 const focalPixels=Math.max(280,(glCanvas.clientHeight||700)/(2*Math.tan(48*RAD/2)));
 const cameraPoint=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];
@@ -357,8 +360,8 @@ function drawLabels(){
  for(let i=0;i<unitStates.length;i++){
   const q=unitStates[i],x0=unitOffset(i),py=apparatusPivotHeight(q),pz=.078;
   if(Math.cos(camera.yaw)>.25){
-   ctx.textAlign='center';ctx.font='700 '+angleFont+'px sans-serif';ctx.fillStyle=q.blue?'#fff':'#576565';ctx.strokeStyle='#fff';ctx.lineWidth=3;
-   const max=s.blue?30:90,R=s.blue?.095:.101;
+   ctx.textAlign='center';ctx.font='700 '+angleFont+'px sans-serif';ctx.fillStyle='#576565';ctx.strokeStyle='#fff';ctx.lineWidth=3;
+   const max=90,R=.101;
    for(let deg=-max;deg<=max;deg+=10){
     const p=to2(anglePoint(x0,py,pz+.016,R,deg*RAD));if(!p)continue;
     ctx.strokeText(String(Math.abs(deg)),p[0],p[1]);ctx.fillText(String(Math.abs(deg)),p[0],p[1]);
@@ -378,7 +381,7 @@ function drawLabels(){
  ctx.restore();
 }
 function drawVelocityOverlay(){
- if((!s.showVelocity&&!s.showStringLength&&!s.showBobMass)||!lastVP)return;
+ if(!s.showMeasurements||!lastVP)return;
  const W=labelCanvas.width,H=labelCanvas.height,ctx=labelctx;
  const screen=p=>{const q=project(p,lastVP);return q&&q[2]<1&&q[2]>-1?[(q[0]+1)*W/2,(1-q[1])*H/2]:null};
  const pivotPoint=[pivot[0],pivot[1],pivot[2]+.016],bobs=bobCoordinates();
@@ -411,12 +414,9 @@ function drawVelocityOverlay(){
  };
  for(let i=0;i<items.length;i++){
   const b=items[i],p=screen(b.pos),p0=screen(b.from);if(!p||!p0)continue;
-  if(s.showStringLength){
-   const x=p0[0]*.55+p[0]*.45,y=p0[1]*.55+p[1]*.45;
-   textLabel('L'+(i+1)+' '+b.len.toFixed(2)+' m',x+18,y-17,{size:17,color:'#333'});
-  }
-  if(s.showBobMass)textLabel('m'+(i+1)+' '+b.mass.toFixed(0)+' g',p[0]+16,p[1]-30,{size:17,color:'#333'});
-  if(!s.showVelocity)continue;
+  const x=p0[0]*.55+p[0]*.45,y=p0[1]*.55+p[1]*.45;
+  textLabel('L'+(i+1)+' '+b.len.toFixed(2)+' m',x+18,y-17,{size:17,color:'#333'});
+  textLabel('m'+(i+1)+' '+b.mass.toFixed(0)+' g',p[0]+16,p[1]-30,{size:17,color:'#333'});
   const vx=b.vx*3.6,down=b.down*3.6,ox=p[0],oy=p[1];
   // Circular mass-point origin, centered on the physical bob.
   ctx.beginPath();ctx.arc(ox,oy,8,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#222';ctx.lineWidth=2.5;ctx.stroke();
@@ -497,7 +497,7 @@ function enforceLimit(which){
 }
 function updateIndoor(){s.indoor=$('indoorMode').checked;enforceLimit('L');reset();dirty=true;buildRoom();const M=apparatusMetrics();camera.ty=s.indoor?1.08:Math.max(1.08,M.topY*.38);camera.dist=s.indoor?2.05:Math.max(2.05,M.topY*1.5);clampIndoorCamera()}
 $('indoorMode').addEventListener('change',updateIndoor);
-$('velocityVectors').addEventListener('change',e=>s.showVelocity=e.target.checked);for(const [id,key] of [['showStringLength','showStringLength'],['showBobMass','showBobMass']])$(id).addEventListener('change',e=>s[key]=e.target.checked);
+$('showMeasurements').addEventListener('change',e=>s.showMeasurements=e.target.checked);
 const stageElement=document.querySelector('.stage');
 function updateFullscreenText(){$('fullscreenBtn').textContent=document.fullscreenElement?'⛶ 終了':'⛶ 全画面'}
 $('fullscreenBtn').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await stageElement.requestFullscreen()}catch(e){alert('全画面表示を開始できません: '+e.message)}});
@@ -506,8 +506,7 @@ document.addEventListener('fullscreenchange',updateFullscreenText);
 $('doubleEnabled').addEventListener('change',e=>{s.second=e.target.checked;$('secondParams').hidden=!s.second;enforceLimit();reset();dirty=true;buildRoom();persistActive();updateGraphVisibility()});
 for(const [id,key,min,max,round] of [['length2','L2',.05,999,.01],['mass2','m2',20,1000,10],['angle2','a02',-80,80,1]]){for(const kind of ['', 'Num'])$(id+kind).addEventListener(kind?'change':'input',e=>{const n=+e.target.value;if(!Number.isFinite(n))return;s[key]=Math.round(clamp(n,min,max)/round)*round;enforceLimit(key);reset();dirty=true;buildRoom()})}
 $('start').onclick=()=>{s.playing=!s.playing;$('start').textContent=s.playing?'Ⅱ 一時停止':'▶ 再開';$('status').textContent=s.playing?'実験中':'一時停止中'};$('reset').onclick=reset;
-for(const [id,key] of [['trajectory','trajectory'],['angleArc','angleArc'],['roomToggle','room'],['plotterToggle','plotter']])$(id).onchange=e=>s[key]=e.target.checked;
-for(const [id,on] of [['bluePlate',true],['fullPlate',false]])$(id).onclick=()=>{s.blue=on;dirty=true;document.querySelectorAll('.radioBtns button').forEach(b=>b.classList.toggle('active',b.id===id))};
+for(const [id,key] of [['trajectory','trajectory'],['roomToggle','room'],['plotterToggle','plotter']])$(id).onchange=e=>s[key]=e.target.checked;
 const presets={front:[0,.13,2.05],diagonal:[.58,.18,4.45],top:[.48,.78,5.45],room:[.50,.24,10.5]};
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{let v=presets[b.dataset.view],M=apparatusMetrics();currentView=b.dataset.view;camera.yaw=v[0];camera.pitch=v[1];camera.dist=v[2]+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35;camera.tx=0;camera.tz=0;camera.ty=1.08+Math.max(0,M.topY-1.08)*.28;clampIndoorCamera();document.querySelectorAll('[data-view]').forEach(t=>t.classList.toggle('active',t===b))};
 for(const suffix of ['', 'Num'])document.getElementById('poleHeight'+suffix).addEventListener(suffix?'change':'input',e=>{const h=Number(e.target.value);if(!Number.isFinite(h))return;s.poleHeight=clamp(h,1.5,s.indoor?3:1000);enforceLimit('L');reset();dirty=true;buildRoom()});
