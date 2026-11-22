@@ -164,7 +164,9 @@ if(outdoorBackdrop){
  }
 }
 
-if(!roofExceeded){
+// Keep the classroom (floor, walls, furniture, windows and blackboard) at every height.
+ // Only its roof and ceiling lights disappear when a support rises past the roof.
+{
  box(0,floorY-.07,-1.5,16,.14,18,'#ffffff');for(let x=-7.5;x<=7.5;x+=.5)line([x,floorY+.003,-10],[x,floorY+.003,7],.002,'#e5e5e5');for(let z=-10;z<=7;z+=.5)line([-8,floorY+.003,z],[8,floorY+.003,z],.002,'#e5e5e5');
  // Interior architecture and furnishings are drawn only while the apparatus remains indoors.
  box(0,ceilingY/2,-9.25,16,ceilingY,.14,'#ffffff');box(-8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');box(8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');
@@ -173,7 +175,13 @@ if(!roofExceeded){
  box(3.7,1.82,-9.09,2.25,1.26,.075,'#ffffff');box(3.7,1.82,-9.035,2.08,1.10,.025,'#ffffff');
  for(const z of [-6.5,-3.7,-.9,1.9]){box(7.88,2.0,z,.18,1.65,2.35,'#ffffff');box(7.775,2.0,z,.035,1.48,2.16,'#bdd5dc');box(7.74,2.0,z,.07,1.55,.07,'#ffffff');box(7.74,2.0,z,.07,.07,2.2,'#ffffff');}
  for(const x of [-6.85,6.85]){box(x,1.11,-8.35,1.15,2.15,.48,'#ffffff');for(let j=0;j<3;j++){box(x,1.8-j*.58,-8.04,1.03,.018,.02,'#b3b3b3')}box(x,2.19,-8.04,1.05,.028,.026,'#aaaaaa');}
- box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7'); for(const z of [-6,-2.5,1,4.5])for(const x of [-3.6,0,3.6]){box(x,ceilingY-.12,z,.24,.04,1.5,'#eeeeee');box(x,ceilingY-.16,z,.18,.03,1.39,'#ffffff')}
+ if(!roofExceeded){
+  box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7');
+  for(const z of [-6,-2.5,1,4.5])for(const x of [-3.6,0,3.6]){
+   box(x,ceilingY-.12,z,.24,.04,1.5,'#eeeeee');
+   box(x,ceilingY-.16,z,.18,.03,1.39,'#ffffff')
+  }
+ }
  for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
  box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
 }
