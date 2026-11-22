@@ -628,7 +628,7 @@ function addHeightComparisonRuler(){
 // Repeating non-overlapping ground tiles cover the entire camera range.
 function addVirtualCity(){
  const tile=3600;
- const groundColors=['#a7b5a7','#aab8ac','#acb9ad','#a7b4aa','#a8b7a8'];
+ const groundColors=['#503528','#563a2c','#5b3e2e','#52372a','#4c3226'];
  for(let ix=-12;ix<12;ix++)for(let iz=-12;iz<12;iz++){
   const x0=ix*tile,z0=iz*tile,x1=x0+tile,z1=z0+tile;
   const color=groundColors[Math.abs((ix*31+iz*17)%groundColors.length)];
@@ -1087,11 +1087,33 @@ let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*M
  const nearPlane=Math.max(.08,Math.min(50,camera.dist*.02));
  const farPlane=Math.max(4000,Math.min(12000,camera.dist*3+1800));
  let proj=sceneProjection(w/h,camera.dist,nearPlane,farPlane),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
-const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room){drawBuffer(roomBuf,roomCount);if(outside)drawLandmarkPhotos(lastVP);}drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
+const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);
+if(outside&&projectionMode==='orthographic'){
+ // Parallel projection has no natural perspective horizon. Keep a visual horizon
+ // tied to the camera pitch and paint the lower screen half as the ground plane.
+ const horizonNdc=Math.tan(camera.pitch)/Math.tan(24*RAD);
+ const horizonTop=clamp(Math.round((1-horizonNdc)*.5*h),0,h);
+ const groundHeight=h-horizonTop;
+ gl.enable(gl.SCISSOR_TEST);
+ if(groundHeight>0){gl.scissor(0,0,w,groundHeight);gl.clearColor(75/255,48/255,37/255,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}
+ if(horizonTop>0){gl.scissor(0,groundHeight,w,horizonTop);gl.clearColor(.60,.80,.98,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}
+ gl.disable(gl.SCISSOR_TEST);
+}else{gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT)}
+gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room){drawBuffer(roomBuf,roomCount);if(outside)drawLandmarkPhotos(lastVP);}drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
 else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(!s.indoor&&roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels();drawHeightComparisonLabels()}
 function renderSoftware(w,h){const ctx=canvas2d;
  const img=ctx.createImageData(w,h),pixels=img.data,depthBuf=new Float32Array(w*h);
- const sky=showOutdoorBackdrop();for(let i=0;i<w*h;i++){depthBuf[i]=1;pixels[i*4]=sky?153:255;pixels[i*4+1]=sky?204:255;pixels[i*4+2]=sky?250:255;pixels[i*4+3]=255}
+ const sky=showOutdoorBackdrop();
+ const horizonTop=sky&&projectionMode==='orthographic'
+  ?clamp(Math.round((1-Math.tan(camera.pitch)/Math.tan(24*RAD))*.5*h),0,h):h;
+ for(let i=0;i<w*h;i++){
+  depthBuf[i]=1;
+  const ground=sky&&projectionMode==='orthographic'&&Math.floor(i/w)>=horizonTop;
+  pixels[i*4]=ground?75:sky?153:255;
+  pixels[i*4+1]=ground?48:sky?204:255;
+  pixels[i*4+2]=ground?37:sky?250:255;
+  pixels[i*4+3]=255;
+ }
  const sources=s.room?[roomBuf,staticBuf,dynamicBuf]:[staticBuf,dynamicBuf];
  for(const name of sources){const arr=fallbackMeshes.get(name);if(!arr)continue;
  for(let i=0;i<arr.length;i+=27){let pts=[],normal=[arr[i+3],arr[i+4],arr[i+5]],col=[arr[i+6],arr[i+7],arr[i+8]],invalid=false;
