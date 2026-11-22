@@ -144,177 +144,193 @@ function showOutdoorBackdrop(){
    Tokyo Tower / TOKYO SKYTREE specifications and Takamatsu City's Yashima
    topography; the models are stylized scene-scale representations. */
 function addTokyoTower(cx,cz){
- const orange='#f04b25',white='#f4f2e9',glass='#579eaa',glass2='#78b5bd';
- // Historical elevation supplied by the user: 125 m main observatory,
- // 225 m antenna work platform, 254 m lattice summit, 333 m overall.
- // The registered cultural-property record gives an 80 m leg spacing.
- const profile=[
-  [0,40],[20,36.5],[50,29.2],[95,20.5],[125,15.4],
-  [150,11.8],[175,8.7],[200,5.8],[225,4.0],[254,2.15]
- ];
- const widthAt=y=>{
-  let i=0;while(i<profile.length-2&&y>profile[i+1][0])i++;
-  const [y0,w0]=profile[i],[y1,w1]=profile[i+1];
-  const [yp,wp]=profile[Math.max(0,i-1)],[yn,wn]=profile[Math.min(profile.length-1,i+2)];
-  const t=clamp((y-y0)/(y1-y0),0,1),h=y1-y0;
-  const m0=i===0?(w1-w0)/h:(w1-wp)/(y1-yp);
-  const m1=i===profile.length-2?(w1-w0)/h:(wn-w0)/(yn-y0);
-  const t2=t*t,t3=t2*t;
-  const w=(2*t3-3*t2+1)*w0+(t3-2*t2+t)*h*m0+(-2*t3+3*t2)*w1+(t3-t2)*h*m1;
-  return clamp(w,Math.min(w0,w1),Math.max(w0,w1));
- };
+ // Reference: user's historical Tokyo Tower elevation / photographs.
+ // 80 m between footings, 125 m main observation deck, 225 m circular
+ // maintenance platform, 254 m antenna support summit, 333 m total height.
+ // This is a geometrically studied educational model, not an as-built CAD survey.
+ const red='#f04426',redDark='#c93420',white='#f5f4ed',trim='#d9e0df';
+ const glazing='#4b92a8',glazingLight='#82b9c5',frame='#e5ebeb';
  const corners=[[-1,-1],[1,-1],[1,1],[-1,1]];
- const cornerAt=(c,y)=>[cx+c[0]*widthAt(y),y,cz+c[1]*widthAt(y)];
- const bandColor=y=>{
-  if(y<125)return orange;
-  if(y<225){
-   const band=Math.min(3,Math.floor((y-125)/25));
-   return band%2===0?orange:white; // orange / white / orange / white
-  }
-  if(y<254)return orange;
-  return orange;
- };
- // Four independently curved legs. Their feet are 80 m apart, then sweep
- // inward with the characteristic bowed profile rather than straight sides.
- for(let i=0;i<corners.length;i++){
-  const c=corners[i];
-  for(let y=0;y<254;y+=4){
-   const y1=Math.min(254,y+4);
-   const radius=1.55*Math.pow(Math.max(.08,1-y1/285),.55)+.22;
-   line(cornerAt(c,y),cornerAt(c,y1),radius,bandColor((y+y1)/2));
-  }
-  const foot=cornerAt(c,0);
-  box(foot[0],-.55,foot[2],6.2,1.1,6.2,'#777d7d');
-  box(foot[0],.16,foot[2],4.8,.32,4.8,'#aeb4b2');
+ const profile=[
+  [0,40],[8,38.7],[20,35.2],[40,29.5],[60,24.5],
+  [85,19.7],[105,16.8],[119,14.9],[125,14.0],
+  [150,10.8],[175,8.3],[200,5.9],[225,4.1],[254,2.45]
+ ];
+ function halfSpan(y){
+  const yy=clamp(y,0,254);
+  let i=0;while(i<profile.length-2 && yy>profile[i+1][0])i++;
+  const [y0,w0]=profile[i],[y1,w1]=profile[i+1],u=(yy-y0)/(y1-y0);
+  const before=profile[Math.max(0,i-1)],after=profile[Math.min(profile.length-1,i+2)];
+  const m0=i===0?(w1-w0)/(y1-y0):(w1-before[1])/(y1-before[0]);
+  const m1=i===profile.length-2?(w1-w0)/(y1-y0):(after[1]-w0)/(after[0]-y0);
+  const h=y1-y0,u2=u*u,u3=u2*u;
+  return (2*u3-3*u2+1)*w0+(u3-2*u2+u)*h*m0+
+         (-2*u3+3*u2)*w1+(u3-u2)*h*m1;
  }
- // Closely spaced horizontal and diagonal steel members on all four faces.
- const levels=[0];
- for(let y=8;y<254;y+=8)levels.push(y);
- levels.push(125,225,254);
- levels.sort((a,b)=>a-b);
- const ys=levels.filter((y,i)=>i===0||y-levels[i-1]>.001);
- for(let i=0;i<ys.length-1;i++){
-  const y0=ys[i],y1=ys[i+1],col=bandColor((y0+y1)/2);
+ const corner=(j,y)=>[cx+corners[j][0]*halfSpan(y),y,cz+corners[j][1]*halfSpan(y)];
+ function paint(y){
+  if(y<125)return red;
+  if(y<225)return Math.min(3,Math.floor((y-125)/25))%2===0?red:white;
+  return red;
+ }
+ // A true four-legged base, not one tapered pyramid densely crossed at ground level.
+ // Each leg is an open triangular truss with two tangential chords, tapering as it rises.
+ const footLevels=[0,8,16,24,32,40,50,60,70,82,94,105,115,125];
+ function legChord(j,y,side){
+  const c=corners[j],p=corner(j,y);
+  const t=Math.max(.55,3.7*(1-y/155));
+  const d=side*t/Math.SQRT2;
+  return[p[0]-c[1]*d,p[1],p[2]+c[0]*d];
+ }
+ for(let j=0;j<4;j++){
+  const foot=corner(j,0);
+  box(foot[0],-.52,foot[2],5.6,1.05,5.6,'#a7adad');
+  box(foot[0],.08,foot[2],4.4,.22,4.4,'#d6d9d6');
+  for(let i=0;i<footLevels.length-1;i++){
+   const y0=footLevels[i],y1=footLevels[i+1];
+   for(const side of [-1,1]){
+    line(legChord(j,y0,side),legChord(j,y1,side),
+      Math.max(.42,1.75-y0*.009),red);
+   }
+   const a=legChord(j,y0,-1),b=legChord(j,y0,1);
+   const c=legChord(j,y1,-1),d=legChord(j,y1,1);
+   line(a,b,.58,red);line(c,d,.52,red);
+   // Narrow, leg-local triangular lacing leaves the central opening unobstructed.
+   if(i%2===0){line(a,d,.34,red);line(b,c,.28,redDark)}
+   else{line(b,c,.38,red);line(a,d,.27,redDark)}
+   // Structural edge inside each leg running radially toward the tower center.
+   const center0=corner(j,y0),center1=corner(j,y1);
+   if(i%2===0){line(a,center1,.26,red);line(b,center1,.26,red)}
+   line(center0,center1,.60,red);
+  }
+ }
+ // The characteristic open arches span adjacent legs on EACH tower face.
+ // Their ends lie on the legs, not outside them. No full-width truss is placed
+ // below 65m: the large central empty arch must remain visible.
+ for(let j=0;j<4;j++){
+  const k=(j+1)%4;
+  let previous=null;
+  for(let n=0;n<=32;n++){
+   const u=n/32,y=15+57*Math.pow(Math.max(0,1-Math.pow(2*u-1,2)),.72);
+   const a=corner(j,y),b=corner(k,y);
+   const p=add(mul(a,1-u),mul(b,u));
+   if(previous)line(previous,p,.59,red);
+   previous=p;
+  }
+  // Arch-to-leg gusset members meet the real leg nodes.
+  for(const u of [.12,.22,.78,.88]){
+   const y=15+57*Math.pow(Math.max(0,1-Math.pow(2*u-1,2)),.72);
+   const a=corner(j,y),b=corner(k,y),p=add(mul(a,1-u),mul(b,u));
+   const lower=corner(u<.5?j:k,Math.max(6,y-17));
+   line(lower,p,.37,red);
+  }
+ }
+ // Horizontal wind bracing across the four faces STARTS at the arch crown.
+ // This separation creates the four immense open bays evident in the photos.
+ const lowerLevels=[70,80,90,100,110,120,125];
+ for(let i=0;i<lowerLevels.length-1;i++){
+  const y0=lowerLevels[i],y1=lowerLevels[i+1];
   for(let j=0;j<4;j++){
-   const k=(j+1)%4;
-   const a0=cornerAt(corners[j],y0),b0=cornerAt(corners[k],y0);
-   const a1=cornerAt(corners[j],y1),b1=cornerAt(corners[k],y1);
-   line(a0,b0,.58,col);
-   line(a1,b1,.58,col);
-   line(a0,b1,.39,col);
-   line(b0,a1,.39,col);
-   // A finer secondary diagonal gives the dense triangular lattice seen in the photograph.
-   if(i%2===0){
-    const mid0=mul(add(a0,b0),.5),mid1=mul(add(a1,b1),.5);
-    line(a0,mid1,.24,col);line(b0,mid1,.24,col);
-    line(mid0,a1,.24,col);line(mid0,b1,.24,col);
+   const k=(j+1)%4,a=corner(j,y0),b=corner(k,y0);
+   const c=corner(j,y1),d=corner(k,y1);
+   line(a,b,.50,red);line(c,d,.50,red);
+   if(i%2===0){line(a,d,.44,red);line(b,c,.23,redDark)}
+   else{line(b,c,.44,red);line(a,d,.23,redDark)}
+   const midpoint=mul(add(a,b),.5);
+   line(midpoint,c,.19,red);line(midpoint,d,.19,red);
+  }
+ }
+ // Four alternating colour zones in the narrower tower above the main deck:
+ // [125,150) RED / [150,175) WHITE / [175,200) RED / [200,225) WHITE.
+ const upperLimits=[125,150,175,200,225,254];
+ for(let zone=0;zone<upperLimits.length-1;zone++){
+  const bottom=upperLimits[zone],top=upperLimits[zone+1];
+  const col=zone<4?(zone%2===0?red:white):red;
+  const n=zone===4?5:5;
+  for(let i=0;i<n;i++){
+   const y0=bottom+(top-bottom)*i/n,y1=bottom+(top-bottom)*(i+1)/n;
+   for(let j=0;j<4;j++){
+    const k=(j+1)%4,a=corner(j,y0),b=corner(k,y0);
+    const c=corner(j,y1),d=corner(k,y1);
+    line(a,c,.72,col);line(a,b,.43,col);
+    line(a,d,.38,col);line(b,c,.30,col);
+    if(i%2===0)line(mul(add(a,b),.5),mul(add(c,d),.5),.23,col);
    }
   }
  }
- // Broad arched braces in the lower tower, visible in the supplied elevation.
- for(let j=0;j<4;j++){
-  const k=(j+1)%4,pa=cornerAt(corners[j],20),pb=cornerAt(corners[k],20);
-  let previous=null;
-  for(let n=0;n<=32;n++){
-   const u=-1+2*n/32;
-   const p=[
-    pa[0]+(pb[0]-pa[0])*(u+1)/2,
-    20+75*(1-u*u),
-    pa[2]+(pb[2]-pa[2])*(u+1)/2
-   ];
-   if(previous)line(previous,p,.78,orange);
-   previous=p;
-  }
- }
- // Main observatory at 120–126 m: chamfered rectangular plan, broad two-tier
- // silhouette, orange structural fascia and blue-green glazed window band.
- const outline=[
-  [-18.2,-13.0],[18.2,-13.0],[21.5,-9.7],[21.5,9.7],
-  [18.2,13.0],[-18.2,13.0],[-21.5,9.7],[-21.5,-9.7]
+ // Main deck at 120–132 m, octagonal plan, two actual glazed storeys.
+ // Compared with the 80m leg spacing the main deck measures about 42 x 32m.
+ const shape=[
+  [-18.4,-16.2],[18.4,-16.2],[21.2,-12.6],[21.2,12.6],
+  [18.4,16.2],[-18.4,16.2],[-21.2,12.6],[-21.2,-12.6]
  ];
- const yBottom=120.2,yGlass0=121.4,yGlass1=125.4,yTop=126.4;
- const bottom=outline.map(p=>[cx+p[0],yBottom,cz+p[1]]);
- const top=outline.map(p=>[cx+p[0],yTop,cz+p[1]]);
- const center=[cx,(yBottom+yTop)/2,cz];
- for(let i=0;i<outline.length;i++){
-  const j=(i+1)%outline.length;
-  quad(bottom[i],bottom[j],top[j],top[i],'#d9dedb');
-  tri([cx,yBottom,cz],bottom[j],bottom[i],'#c9ceca');
-  tri([cx,yTop,cz],top[i],top[j],'#e9ece8');
-  const x0=outline[i][0],z0=outline[i][1],x1=outline[j][0],z1=outline[j][1];
-  const mx=(x0+x1)/2,mz=(z0+z1)/2,normXZ=Math.hypot(mx,mz)||1;
-  const ox=mx/normXZ*.075,oz=mz/normXZ*.075;
-  const p0=[cx+x0+ox,yGlass0,cz+z0+oz],p1=[cx+x1+ox,yGlass0,cz+z1+oz];
-  const q1=[cx+x1+ox,yGlass1,cz+z1+oz],q0=[cx+x0+ox,yGlass1,cz+z0+oz];
-  quad(p0,p1,q1,q0,glass);
-  line(p0,p1,.20,orange);line(q0,q1,.28,white);
-  for(let n=1;n<6;n++){
-   const t=n/6,x=cx+x0+(x1-x0)*t+ox,z=cz+z0+(z1-z0)*t+oz;
-   line([x,yGlass0,z],[x,yGlass1,z],.105,glass2);
-  }
- }
- // Upper and lower continuous rims, plus the distinctive sloped deck shoulders.
- for(let i=0;i<outline.length;i++){
-  const j=(i+1)%outline.length;
-  line(top[i],top[j],.48,white);
-  line(bottom[i],bottom[j],.42,orange);
-  const p=[cx+outline[i][0],yGlass0,cz+outline[i][1]];
-  const q=[cx+outline[i][0]*.91,119.1,cz+outline[i][1]*.91];
-  line(p,q,.62,orange);
- }
- // Four paired brackets connect the deck to the tower legs.
- for(const c of corners){
-  line(cornerAt(c,116),[cx+c[0]*19.4,120.2,cz+c[1]*11.4],.75,orange);
-  line(cornerAt(c,112),[cx+c[0]*18.2,120.2,cz+c[1]*10.4],.48,white);
- }
- // Round antenna-maintenance platform at 225 m: a real annular deck,
- // with outer guardrail, radial supports and an open centre around the mast.
- const seg=40,outerR=8.1,innerR=3.55,platformBottom=223.7,platformTop=226.1;
- for(let i=0;i<seg;i++){
-  const a=i*2*Math.PI/seg,b=(i+1)*2*Math.PI/seg;
-  const point=(r,y,t)=>[cx+r*Math.cos(t),y,cz+r*Math.sin(t)];
-  const ob0=point(outerR,platformBottom,a),ob1=point(outerR,platformBottom,b);
-  const ot0=point(outerR,platformTop,a),ot1=point(outerR,platformTop,b);
-  const ib0=point(innerR,platformBottom,a),ib1=point(innerR,platformBottom,b);
-  const it0=point(innerR,platformTop,a),it1=point(innerR,platformTop,b);
-  quad(ob0,ob1,ot1,ot0,'#bfc7c5');
-  quad(ib1,ib0,it0,it1,'#aeb8b6');
-  quad(ot0,ot1,it1,it0,'#e8ece8');
-  quad(ob1,ob0,ib0,ib1,'#9da8a6');
-  line(ot0,ot1,.22,white);
-  line(point(outerR,227.6,a),point(outerR,227.6,b),.20,white);
-  line(point(outerR,226.1,a),point(outerR,227.6,a),.12,white);
-  if(i%5===0){
-   line(point(innerR,221.4,a),point(outerR,223.7,a),.24,orange);
-   line(point(innerR,226.1,a),point(outerR,226.1,a),.18,white);
-  }
- }
- // Short lattice crown between the work platform and the 254 m antenna base.
- for(let y=226;y<254;y+=4){
-  const y1=Math.min(254,y+4),w0=widthAt(y),w1=widthAt(y1);
-  for(let j=0;j<4;j++){
-   const k=(j+1)%4,a=[cx+corners[j][0]*w0,y,cz+corners[j][1]*w0],
-    b=[cx+corners[k][0]*w0,y,cz+corners[k][1]*w0],
-    c=[cx+corners[j][0]*w1,y1,cz+corners[j][1]*w1],
-    d=[cx+corners[k][0]*w1,y1,cz+corners[k][1]*w1];
-   line(a,b,.38,orange);line(a,d,.30,orange);line(b,c,.30,orange);
-  }
- }
- // Tapered aerial mast from 254 m to the 333 m tip, in alternating
- // International Orange and white painted sections.
+ const inset=(factor,y)=>shape.map(p=>[cx+p[0]*factor,y,cz+p[1]*factor]);
+ const low=inset(.94,119.8),bottom=inset(1.0,121.5),top=inset(1.0,131.0),roof=inset(.96,132.0);
  for(let i=0;i<8;i++){
-  const y0=254+i*(79/8),y1=254+(i+1)*(79/8);
-  const r0=1.75*(1-i/8)+.12,r1=1.75*(1-(i+1)/8)+.055;
-  cyl([cx,y0,cz],[cx,y1,cz],r0,i%2===0?orange:white,12,r1);
-  if(i<7)line([cx,y1,cz],[cx,y1+.7,cz],.10,white);
+  const j=(i+1)%8;
+  quad(low[i],low[j],bottom[j],bottom[i],red);
+  quad(bottom[i],bottom[j],top[j],top[i],'#d2d9d9');
+  quad(top[i],top[j],roof[j],roof[i],white);
+  tri([cx,119.8,cz],low[j],low[i],'#a4b6ba');
+  tri([cx,132.0,cz],roof[i],roof[j],white);
+  // A window curtain wall flush with each of the eight faceted elevations.
+  const a=shape[i],b=shape[j];
+  const mid=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  const n=norm([mid[0],0,mid[1]]);
+  const offset=.24,px=(x)=>cx+x[0]+n[0]*offset,pz=(x)=>cz+x[1]+n[2]*offset;
+  const p0=[px(a),122.2,pz(a)],p1=[px(b),122.2,pz(b)];
+  const p2=[px(b),130.1,pz(b)],p3=[px(a),130.1,pz(a)];
+  quad(p0,p1,p2,p3,glazing);
+  line(p0,p1,.22,white);line(p3,p2,.29,white);
+  for(let row=1;row<3;row++){
+   const yy=122.2+row*(7.9/3);
+   line([p0[0],yy,p0[2]],[p1[0],yy,p1[2]],.14,frame);
+  }
+  const edgeLength=Math.hypot(b[0]-a[0],b[1]-a[1]);
+  const divisions=Math.max(2,Math.ceil(edgeLength/2.6));
+  for(let m=0;m<=divisions;m++){
+   const u=m/divisions;
+   const xx=p0[0]+(p1[0]-p0[0])*u,zz=p0[2]+(p1[2]-p0[2])*u;
+   line([xx,122.2,zz],[xx,130.1,zz],.14,m%3===0?white:glazingLight);
+  }
+  // Continuous wide eave and raised upper edge distinguish the deck at distance.
+  line(bottom[i],bottom[j],.72,white);
+  line(top[i],top[j],.60,white);
  }
- // A fine aerial tip and a few visible antenna stays.
- cyl([cx,333,cz],[cx,334,cz],.07,orange,8,.025);
+ // Broad red structural brackets carry the projecting observation platform.
  for(let j=0;j<4;j++){
-  const a=j*Math.PI/2;
-  line([cx+1.45*Math.cos(a),254,cz+1.45*Math.sin(a)],
-       [cx+.24*Math.cos(a),270,cz+.24*Math.sin(a)],.12,white);
+  const c=corners[j],l=corner(j,107);
+  const p=[cx+c[0]*17.7,120.2,cz+c[1]*13.5];
+  line(l,p,.73,red);
+  line(corner(j,112),[cx+c[0]*15.3,121.1,cz+c[1]*11.6],.44,red);
  }
+ // Round service / work platform at 225m: stepped metal ring and guardrail.
+ const segments=40,outerRadius=10.6,innerRadius=3.45;
+ const ring=(r,y,t)=>[cx+r*Math.cos(t),y,cz+r*Math.sin(t)];
+ for(let i=0;i<segments;i++){
+  const a=2*Math.PI*i/segments,b=2*Math.PI*(i+1)/segments;
+  const ob0=ring(outerRadius,223.3,a),ob1=ring(outerRadius,223.3,b);
+  const ot0=ring(outerRadius,226.5,a),ot1=ring(outerRadius,226.5,b);
+  const ib0=ring(innerRadius,223.3,a),ib1=ring(innerRadius,223.3,b);
+  const it0=ring(innerRadius,226.5,a),it1=ring(innerRadius,226.5,b);
+  quad(ob0,ob1,ot1,ot0,'#c2c7c8');
+  quad(ot0,ot1,it1,it0,white);
+  quad(ib1,ib0,it0,it1,'#b6c0c0');
+  line(ot0,ot1,.22,white);
+  line(ring(outerRadius,229.2,a),ring(outerRadius,229.2,b),.13,white);
+  if(i%4===0){
+   line(ring(outerRadius,226.5,a),ring(outerRadius,229.2,a),.15,white);
+   line(ring(innerRadius,222.6,a),ob0,.30,red);
+   line(ring(innerRadius,226.5,a),ot0,.17,white);
+  }
+ }
+ // Slender red/white antenna to 333m above the lattice (254m).
+ for(let i=0;i<8;i++){
+  const y0=254+i*79/8,y1=254+(i+1)*79/8;
+  const r0=1.6*(1-i/8)+.16,r1=1.6*(1-(i+1)/8)+.055;
+  cyl([cx,y0,cz],[cx,y1,cz],r0,i%2===0?red:white,12,r1);
+ }
+ cyl([cx,333,cz],[cx,334,cz],.07,red,8,.025);
 }
 function addTokyoSkytree(cx,cz){
  const white='#e8f0f2',shade='#c1cdd1',dark='#aebec4';
