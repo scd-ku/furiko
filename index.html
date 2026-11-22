@@ -139,26 +139,148 @@ function showOutdoorBackdrop(){
  // while keeping the classroom itself until the support exceeds the ceiling.
  return !s.indoor || roomNeedsOpenSky();
 }
+
+/* Distant landmark geometry. Proportions and defining features follow official
+   Tokyo Tower / TOKYO SKYTREE specifications and Takamatsu City's Yashima
+   topography; the models are stylized scene-scale representations. */
+function addTokyoTower(cx,cz){
+ const orange='#f04b25',white='#f3f1e9',deck='#e7e5dd';
+ const H=270,panels=30,step=H/panels;
+ const widthAt=y=>3.2+36.8*Math.pow(Math.max(0,1-y/H),1.08);
+ const bandColor=y=>{
+  if(y<150)return Math.floor(y/30)%2===0?orange:white;
+  const band=Math.min(6,Math.floor((y-150)/(120/7)));
+  return band%2===0?orange:white;
+ };
+ const corners=[[-1,-1],[1,-1],[1,1],[-1,1]];
+ // Four splayed feet lead into four independent corner legs.
+ for(const c of corners){
+  line([cx+c[0]*46,-.04,cz+c[1]*46],[cx+c[0]*widthAt(12),12,cz+c[1]*widthAt(12)],2.0,orange);
+ }
+ for(let i=0;i<panels;i++){
+  const y0=i*step,y1=(i+1)*step,w0=widthAt(y0),w1=widthAt(y1),col=bandColor((y0+y1)*.5);
+  const p0=corners.map(c=>[cx+c[0]*w0,y0,cz+c[1]*w0]);
+  const p1=corners.map(c=>[cx+c[0]*w1,y1,cz+c[1]*w1]);
+  for(let j=0;j<4;j++){
+   const k=(j+1)%4;
+   line(p0[j],p1[j],1.45,col);
+   line(p0[j],p0[k],.92,col);
+   line(p0[j],p1[k],.76,col);
+   line(p0[k],p1[j],.76,col);
+  }
+ }
+ // Main deck (150 m) and top deck (250 m).
+ box(cx,150,cz,37,7,29,deck);
+ box(cx,153.8,cz,39,1.0,31,white);
+ box(cx,250,cz,19,6,15,deck);
+ box(cx,253.4,cz,21,1.0,17,white);
+ // Upper antenna mast, from the 270 m steel tower to 333 m.
+ for(let i=0;i<7;i++){
+  const y0=270+i*9,y1=i===6?333:270+(i+1)*9;
+  const r0=2.7*(1-i/7)+.35,r1=2.7*(1-(i+1)/7)+.22;
+  cyl([cx,y0,cz],[cx,y1,cz],r0,i%2===0?orange:white,12,r1);
+ }
+}
+function addTokyoSkytree(cx,cz){
+ const white='#e8f0f2',shade='#c1cdd1',dark='#aebec4';
+ const nodeCount=12,sector=2*Math.PI/3;
+ const smooth=t=>{t=clamp(t,0,1);return t*t*(3-2*t)};
+ const radiusAt=y=>{
+  if(y<=50)return 39.3-7.3*smooth(y/50);
+  if(y<=315)return 32-11.5*smooth((y-50)/265);
+  return 20.5-15.5*smooth((y-315)/319);
+ };
+ const triangleBlend=y=>y<=50?1:y>=315?0:1-smooth((y-50)/265);
+ const pointAt=(y,j)=>{
+  const a=2*Math.PI*j/nodeCount,r=radiusAt(y),blend=triangleBlend(y);
+  // Equilateral-triangle radial profile (68 m side at the base), blending to a circle by 315 m.
+  const sideNormal=Math.PI/3+Math.round((a-Math.PI/3)/sector)*sector;
+  let delta=a-sideNormal;
+  while(delta>Math.PI)delta-=2*Math.PI;
+  while(delta< -Math.PI)delta+=2*Math.PI;
+  const triangularRadius=(r*.5)/Math.max(.5,Math.cos(delta));
+  const rr=r*(1-blend)+triangularRadius*blend;
+  return [cx+rr*Math.cos(a),y,cz+rr*Math.sin(a)];
+ };
+ const levels=[0,10,20,30,40,50];
+ for(let y=70;y<634;y+=20)levels.push(y);
+ levels.push(634);
+ for(let i=0;i<levels.length-1;i++){
+  const y0=levels[i],y1=levels[i+1];
+  for(let j=0;j<nodeCount;j++){
+   const k=(j+1)%nodeCount,p0=pointAt(y0,j),p1=pointAt(y1,j),q0=pointAt(y0,k),q1=pointAt(y1,k);
+   line(p0,p1,(j===0||j===4||j===8)?1.75:.52,white);
+   line(p0,q0,.66,shade);
+   line(p0,q1,.46,dark);
+   if(i%2===0)line(q0,p1,.42,white);
+  }
+ }
+ // Three base footings make the triangular support arrangement legible.
+ for(const j of [0,4,8]){
+  const p=pointAt(0,j);
+  box(p[0],.7,p[2],8,1.4,8,shade);
+ }
+ // Central core and two observation facilities at 350 m and 450 m.
+ cyl([cx,50,cz],[cx,450,cz],2.7,shade,14,2.0);
+ cyl([cx,344,cz],[cx,357,cz],25,white,36);
+ cyl([cx,342.8,cz],[cx,344.2,cz],26,dark,36);
+ cyl([cx,443,cz],[cx,456,cz],17.5,white,36);
+ cyl([cx,441.8,cz],[cx,443.2,cz],18.5,dark,36);
+ // Antenna to the 634 m tip.
+ cyl([cx,450,cz],[cx,634,cz],2.1,white,16,.24);
+}
+function addYashimaMesa(cx,cz){
+ const count=48,rotation=.12,co=Math.cos(rotation),si=Math.sin(rotation),exponent=.72;
+ const summitY=x=>{
+  // South ridge: 292 m; north ridge: 282 m.
+  const u=clamp((x-(cx-1900))/3800,0,1);
+  return 292-10*u;
+ };
+ const makeRing=(hx,hz,y)=>{
+  const pts=[];
+  for(let i=0;i<count;i++){
+   const a=2*Math.PI*i/count,ca=Math.cos(a),sa=Math.sin(a);
+   const lx=hx*Math.sign(ca)*Math.pow(Math.abs(ca),exponent);
+   const lz=hz*Math.sign(sa)*Math.pow(Math.abs(sa),exponent);
+   const x=cx+lx*co+lz*si,z=cz-lx*si+lz*co;
+   pts.push([x,typeof y==='function'?y(x):y,z]);
+  }
+  return pts;
+ };
+ // Approx. 5 km x 2 km footprint: foothills, steep mesa rim and broad summit.
+ const rings=[
+  {hx:2500,hz:1000,y:-.08},
+  {hx:2320,hz:890,y:48},
+  {hx:2140,hz:760,y:138},
+  {hx:2050,hz:680,y:218},
+  {hx:1980,hz:630,y:274},
+  {hx:1900,hz:575,y:summitY}
+ ];
+ const colors=['#82976c','#7d9167','#88836a','#77725f','#6e805f'];
+ const meshes=rings.map(r=>makeRing(r.hx,r.hz,r.y));
+ for(let r=0;r<meshes.length-1;r++){
+  const outer=meshes[r],inner=meshes[r+1],col=colors[r];
+  for(let i=0;i<count;i++){
+   const j=(i+1)%count;
+   quad(outer[i],outer[j],inner[j],inner[i],col);
+  }
+ }
+ const top=meshes[meshes.length-1],center=[cx,287,cz];
+ for(let i=0;i<count;i++)tri(center,top[i],top[(i+1)%count],'#748c62');
+}
+
 function buildRoom(){mesh=[];let floorY=-.018;
  const ceilingY=ROOM_CEILING_Y,roofExceeded=roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
 if(outdoorBackdrop){
  // broad green terrain around the school, horizon visible above the classroom
  // A single non-overlapping terrain surface. Repeated coplanar grass patches
  // caused z-fighting and severe horizontal stripes when the camera pulled back.
- box(0,-.38,-650,3000,.52,3000,'#8cab73');
- // Distant atmospheric landmarks: Tokyo Tower 333m and Tokyo Skytree 634m, not the same campus.
- const haze='#a7b9c4',haze2='#c5d2d8';
- const tx=-480,tz=-1030;
- // Tokyo Tower lattice silhouette and tapered red/white shaft
- for(let i=0;i<18;i++){const y0=i*18.3,y1=(i+1)*18.3,w0=26*(1-y0/470)+2,w1=26*(1-y1/470)+2;const col=i%4<2?'#b8a4a1':haze2;
-  for(const sign of [-1,1]){line([tx+sign*w0,y0,tz],[tx+sign*w1,y1,tz],1.6,col);if(i%2===0)line([tx-sign*w0,y0,tz],[tx+sign*w1,y1,tz],.8,haze2)}
-  if(i%3===0)line([tx-w0,y0,tz],[tx+w0,y0,tz],1.2,haze2);
- }
- line([tx,328,tz],[tx,345,tz],1.9,haze);box(tx,146,tz,53,4,25,haze2);box(tx,250,tz,24,3,12,haze2);
- const sx=490,sz=-1230;
- // Skytree: three-legged taper, observation decks, tall antenna
- for(let i=0;i<27;i++){let y0=i*20,y1=(i+1)*20,r0=Math.max(3,23-y0*.037),r1=Math.max(3,23-y1*.037);for(let j=0;j<3;j++){let a=j*Math.PI*2/3;line([sx+Math.cos(a)*r0,y0,sz+Math.sin(a)*r0],[sx+Math.cos(a)*r1,y1,sz+Math.sin(a)*r1],1.1,haze);}}
- cyl([sx,455,sz],[sx,634,sz],2.3,haze,10);cyl([sx,335,sz],[sx,355,sz],19,haze2,20);cyl([sx,440,sz],[sx,453,sz],13,haze2,20);
+ box(0,-.38,-1800,10000,.52,9000,'#8cab73');
+ // Distant landmarks: researched silhouettes, kept separate from the classroom.
+ addTokyoTower(-480,-1030);
+ addTokyoSkytree(490,-1230);
+ // Yashima is represented as a long, flat-topped mesa in the Takamatsu landscape.
+ addYashimaMesa(0,-2700);
  // light clouds at about 1000m, deliberately spaced away from instrument column
  for(let k=0;k<7;k++){const cx=-750+k*245,cz=-440-(k%3)*240,cy=960+(k%4)*35;
   for(let j=0;j<4;j++)ball([cx+(j-1.5)*27,cy+(j%2)*8,cz],27+(j%3)*10,'#edf2f5',7,12);
