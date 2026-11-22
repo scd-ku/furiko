@@ -143,8 +143,9 @@ function buildRoom(){mesh=[];let floorY=-.018;
  const ceilingY=ROOM_CEILING_Y,roofExceeded=roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
 if(outdoorBackdrop){
  // broad green terrain around the school, horizon visible above the classroom
+ // A single non-overlapping terrain surface. Repeated coplanar grass patches
+ // caused z-fighting and severe horizontal stripes when the camera pulled back.
  box(0,-.38,-650,3000,.52,3000,'#8cab73');
- for(let k=0;k<100;k++){const x=((k*137)%1840)-920,z=-80-((k*229)%1150);box(x,-.105,z,5+(k%5)*3,.09,3+(k%7)*2,k%3===0?'#9fc17d':'#82a966')}
  // Distant atmospheric landmarks: Tokyo Tower 333m and Tokyo Skytree 634m, not the same campus.
  const haze='#a7b9c4',haze2='#c5d2d8';
  const tx=-480,tz=-1030;
@@ -369,7 +370,7 @@ function renderMiniViewport(w,h){
  const vw=Math.min(w-x,Math.floor(r.width*scaleX)),vh=Math.min(h-y,Math.floor(r.height*scaleY));if(vw<=0||vh<=0)return;
  // Fixed initial seating viewpoint, original field of view. Scene and physics remain live.
  const eye=[0,1.08+Math.sin(.13)*2.05,Math.cos(.13)*2.05],target=[0,1.08,0];
- const miniVP=matrixMul(perspective(48*RAD,vw/vh,.04,4000),lookAt(eye,target,[0,1,0]));
+ const miniVP=matrixMul(perspective(48*RAD,vw/vh,.08,4000),lookAt(eye,target,[0,1,0]));
  gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,vw,vh);gl.viewport(x,y,vw,vh);
  gl.clearColor(1,1,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.uniformMatrix4fv(vpLoc,false,new Float32Array(miniVP));
@@ -472,7 +473,11 @@ function drawPlotterTimeLabels(){
  ctx.restore();
 }
 function render(){const [w,h]=resize(glCanvas);if(!w||!h)return;
-let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];let proj=perspective(48*RAD,w/h,.04,4000),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
+let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];// Increase the near plane in proportion to view distance. A fixed 0.04–4000 m
+ // frustum loses depth-buffer precision at ground level in distant views.
+ const nearPlane=Math.max(.08,Math.min(50,camera.dist*.02));
+ const farPlane=Math.max(4000,Math.min(12000,camera.dist*3+1800));
+ let proj=perspective(48*RAD,w/h,nearPlane,farPlane),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
 const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room)drawBuffer(roomBuf,roomCount);drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
 else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels()}
 function renderSoftware(w,h){const ctx=canvas2d;
