@@ -169,7 +169,7 @@ function drawLandmarkPhotos(vp){
  gl.useProgram(prog);
 }
 
-const staticBuf=gl?gl.createBuffer():'static',dynamicBuf=gl?gl.createBuffer():'dynamic',roomBuf=gl?gl.createBuffer():'room';let staticCount=0,roomCount=0,dynamicCount=0;const fallbackMeshes=new Map();
+const staticBuf=gl?gl.createBuffer():'static',dynamicBuf=gl?gl.createBuffer():'dynamic',roomBuf=gl?gl.createBuffer():'room',miniRoomBuf=gl?gl.createBuffer():'miniRoom';let staticCount=0,roomCount=0,miniRoomCount=0,dynamicCount=0;const fallbackMeshes=new Map();
 const color=(h)=>{if(Array.isArray(h))return h;const n=parseInt(h.replace('#',''),16);return[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255]};
 const sub=(a,b)=>[a[0]-b[0],a[1]-b[1],a[2]-b[2]],add=(a,b)=>[a[0]+b[0],a[1]+b[1],a[2]+b[2]],mul=(a,k)=>a.map(v=>v*k),cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]],len=a=>Math.hypot(...a),norm=a=>mul(a,1/(len(a)||1));
 let mesh=[];
@@ -217,7 +217,7 @@ function roomNeedsOpenSky(){
 function showOutdoorBackdrop(){
  // Show exterior scenery whenever the indoor height restriction is disabled,
  // while keeping the classroom itself until the support exceeds the ceiling.
- return !s.indoor || roomNeedsOpenSky();
+ return !s.indoor;
 }
 
 /* Distant landmark geometry. Proportions and defining features follow official
@@ -705,26 +705,9 @@ function addVirtualCity(){
  }
 }
 
-function buildRoom(){mesh=[];let floorY=-.018;
- const ceilingY=ROOM_CEILING_Y,roofExceeded=roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
-if(outdoorBackdrop){
- // Tile-based terrain and fictional neighborhoods continue past the horizon.
- addVirtualCity();
- // Distant landmarks: researched silhouettes, kept separate from the classroom.
- if(!addVerifiedPlateau('tower',LANDMARK_LAYOUT.tower.x,LANDMARK_LAYOUT.tower.z))
-  addTokyoTower(LANDMARK_LAYOUT.tower.x,LANDMARK_LAYOUT.tower.z);
- if(!addVerifiedPlateau('skytree',LANDMARK_LAYOUT.skytree.x,LANDMARK_LAYOUT.skytree.z))
-  addTokyoSkytree(LANDMARK_LAYOUT.skytree.x,LANDMARK_LAYOUT.skytree.z);
- // The classroom at x=0 sits between both towers; Yashima remains behind them.
- addYashimaMesa(LANDMARK_LAYOUT.yashima.x,LANDMARK_LAYOUT.yashima.z);
- addHeightComparisonRuler();
- // light clouds at about 1000m, deliberately spaced away from instrument column
- for(let k=0;k<7;k++){const cx=-750+k*245,cz=-440-(k%3)*240,cy=960+(k%4)*35;
-  for(let j=0;j<4;j++)ball([cx+(j-1.5)*27,cy+(j%2)*8,cz],27+(j%3)*10,'#edf2f5',7,12);
- }
-}
-
-// Keep the classroom (floor, walls, furniture, windows and blackboard) at every height.
+function addClassroomMesh(roofVisible){
+ const ceilingY=ROOM_CEILING_Y,floorY=-.018,roofExceeded=!roofVisible;
+ // Keep the classroom (floor, walls, furniture, windows and blackboard) at every height.
  // Only its roof and ceiling lights disappear when a support rises past the roof.
 {
  box(0,floorY-.07,-1.5,16,.14,18,'#ffffff');for(let x=-7.5;x<=7.5;x+=.5)line([x,floorY+.003,-10],[x,floorY+.003,7],.002,'#e5e5e5');for(let z=-10;z<=7;z+=.5)line([-8,floorY+.003,z],[8,floorY+.003,z],.002,'#e5e5e5');
@@ -745,7 +728,31 @@ if(outdoorBackdrop){
  for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
  box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
 }
-roomCount=upload(roomBuf);updateSceneTitle()}
+}
+function buildRoom(){mesh=[];let floorY=-.018;
+ const ceilingY=ROOM_CEILING_Y,roofExceeded=!s.indoor&&roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
+if(outdoorBackdrop){
+ // Tile-based terrain and fictional neighborhoods continue past the horizon.
+ addVirtualCity();
+ // Distant landmarks: researched silhouettes, kept separate from the classroom.
+ if(!addVerifiedPlateau('tower',LANDMARK_LAYOUT.tower.x,LANDMARK_LAYOUT.tower.z))
+  addTokyoTower(LANDMARK_LAYOUT.tower.x,LANDMARK_LAYOUT.tower.z);
+ if(!addVerifiedPlateau('skytree',LANDMARK_LAYOUT.skytree.x,LANDMARK_LAYOUT.skytree.z))
+  addTokyoSkytree(LANDMARK_LAYOUT.skytree.x,LANDMARK_LAYOUT.skytree.z);
+ // The classroom at x=0 sits between both towers; Yashima remains behind them.
+ addYashimaMesa(LANDMARK_LAYOUT.yashima.x,LANDMARK_LAYOUT.yashima.z);
+ addHeightComparisonRuler();
+ // light clouds at about 1000m, deliberately spaced away from instrument column
+ for(let k=0;k<7;k++){const cx=-750+k*245,cz=-440-(k%3)*240,cy=960+(k%4)*35;
+  for(let j=0;j<4;j++)ball([cx+(j-1.5)*27,cy+(j%2)*8,cz],27+(j%3)*10,'#edf2f5',7,12);
+ }
+}
+
+addClassroomMesh(!roofExceeded);
+roomCount=upload(roomBuf);
+// Camera inset is an independently built room; outdoor city/towers never enter this buffer.
+mesh=[];addClassroomMesh(true);miniRoomCount=upload(miniRoomBuf);
+updateSceneTitle()}
 const s={plotter:false,indoor:true,showMeasurements:false,poleHeight:1.5,L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,room:true};
 // Per-apparatus settings are independent; only the playback transport is shared.
 const UNIT_KEYS=['poleHeight','L','m','a0','theta','omega','second','L2','m2','a02','theta2','omega2','t','track'];
@@ -930,7 +937,7 @@ let lastVP=null, viewport=[1,1],labelctx=labelCanvas.getContext('2d');
 const miniFrame=$('miniFrame'),miniFallback=$('miniFallback');
 // The inset is a second live camera of the SAME scene, not a copied snapshot.
 function renderMiniViewport(w,h){
- const visible=roomNeedsOpenSky()&&s.room;
+ const visible=!s.indoor&&roomNeedsOpenSky()&&s.room;
  miniFrame.hidden=!visible;
  if(!visible||!gl)return;
  const r=miniFrame.getBoundingClientRect(),base=glCanvas.getBoundingClientRect(),scaleX=w/base.width,scaleY=h/base.height;
@@ -942,7 +949,7 @@ function renderMiniViewport(w,h){
  gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,vw,vh);gl.viewport(x,y,vw,vh);
  gl.clearColor(1,1,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.uniformMatrix4fv(vpLoc,false,new Float32Array(miniVP));
- drawBuffer(roomBuf,roomCount);drawLandmarkPhotos(miniVP);drawBuffer(staticBuf,staticCount);drawBuffer(dynamicBuf,dynamicCount);
+ drawBuffer(miniRoomBuf,miniRoomCount);drawBuffer(staticBuf,staticCount);drawBuffer(dynamicBuf,dynamicCount);
  gl.disable(gl.SCISSOR_TEST);gl.viewport(0,0,w,h);
 }
 
@@ -1081,7 +1088,7 @@ let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*M
  const farPlane=Math.max(4000,Math.min(12000,camera.dist*3+1800));
  let proj=sceneProjection(w/h,camera.dist,nearPlane,farPlane),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
 const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room){drawBuffer(roomBuf,roomCount);if(outside)drawLandmarkPhotos(lastVP);}drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
-else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels();drawHeightComparisonLabels()}
+else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(!s.indoor&&roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels();drawHeightComparisonLabels()}
 function renderSoftware(w,h){const ctx=canvas2d;
  const img=ctx.createImageData(w,h),pixels=img.data,depthBuf=new Float32Array(w*h);
  const sky=showOutdoorBackdrop();for(let i=0;i<w*h;i++){depthBuf[i]=1;pixels[i*4]=sky?153:255;pixels[i*4+1]=sky?204:255;pixels[i*4+2]=sky?250:255;pixels[i*4+3]=255}
@@ -1123,15 +1130,15 @@ function updatePoleHeightFromControl(value){
 $('poleHeight').addEventListener('input',e=>updatePoleHeightFromControl(e.target.value));
 $('poleHeightNum').addEventListener('change',e=>updatePoleHeightFromControl(e.target.value));
 function enforceLimit(which){
- const limitHeight=s.indoor?3:1000,base=.76+.605,margin=.09;
+ const limitHeight=s.indoor?3:1000,effectiveHeight=s.indoor?ROOM_CEILING_Y-.08:1000,base=.76+.605,margin=.09;
  const r1=bobRadius(),r2=clamp(.038*Math.cbrt(s.m2/200),.023,.076);
- const available=Math.max(.20,limitHeight-(.76+.684)-margin-(s.second?Math.max(r1,r2):r1));
+ const available=Math.max(.20,effectiveHeight-(.76+.684)-margin-(s.second?Math.max(r1,r2):r1));
  // The entire vertical two-link chain, plus the bob radius, must fit under the cap.
  if(s.second){
   if(which==='L2'){s.L2=Math.min(s.L2,Math.max(.05,available-s.L));s.L=Math.min(s.L,Math.max(.15,available-s.L2));}
   else {s.L=Math.min(s.L,Math.max(.15,available-s.L2));s.L2=Math.min(s.L2,Math.max(.05,available-s.L));}
  }else s.L=Math.min(s.L,available);
- s.L=Math.max(.15,Math.round(s.L*100)/100); s.L2=Math.max(.05,Math.round(s.L2*100)/100);s.poleHeight=clamp(s.poleHeight,1.5,s.indoor?3:1000);$('poleHeight').max=s.indoor?3:1000;$('poleHeightNum').max=s.indoor?3:1000;
+ s.L=Math.max(.15,Math.round(s.L*100)/100); s.L2=Math.max(.05,Math.round(s.L2*100)/100);s.poleHeight=clamp(s.poleHeight,1.5,effectiveHeight);$('poleHeight').max=s.indoor?3:1000;$('poleHeightNum').max=s.indoor?3:1000;
  $('length').max=s.indoor?Math.max(.15,available-(s.second?s.L2:0)):1000;
  $('lengthNum').max=$('length').max;
  $('length2').max=s.indoor?Math.max(.05,available-s.L):999;
@@ -1141,7 +1148,7 @@ function enforceLimit(which){
  $('limitInfo').textContent='紐の合計 '+(s.L+(s.second?s.L2:0)).toFixed(2)+' m／支柱上限 '+limitHeight+' m（球半径と余裕を含む）';
 }
 function updateSceneTitle(){
- const outside=roomNeedsOpenSky();
+ const outside=!s.indoor&&roomNeedsOpenSky();
  $('sceneTitle').textContent=outside?'屋外｜仮想の街と高さ比較':'理科室｜対面型実験台';
  $('sceneSubtitle').textContent=outside
   ?'実験器の最上部が天井高3mを超えたため、屋外の風景を表示しています'
@@ -1150,13 +1157,50 @@ function updateSceneTitle(){
    :'理科室は維持したまま周囲の仮想の街を表示します。支柱が天井を超えると屋外の風景に切り替わります';
 }
 function updateIndoor(){
- // The checkbox changes the height cap and camera restriction, not the room itself.
- s.indoor=$('indoorMode').checked;
+ const activateIndoor=$('indoorMode').checked;
+ // Persist each instrument before switching modes; mode flag itself is global.
  persistActive();
- // Apply the 3 m cap to every apparatus, not only the currently selected one.
- for(let i=0;i<unitStates.length;i++)runUnit(i,()=>enforceLimit('L'));
- Object.assign(s,unitStates[activeUnit]);readParams();
- reset();dirty=true;buildRoom();clampIndoorCamera();updateSceneTitle();
+ s.indoor=activateIndoor;
+ // Bring every support and BOTH strings back below the 3m ceiling, not just
+ // the currently selected apparatus.
+ for(let i=0;i<unitStates.length;i++){
+  runUnit(i,()=>{
+   enforceLimit('L');
+   if(activateIndoor){
+    s.poleHeight=Math.min(s.poleHeight,ROOM_CEILING_Y-.08);
+    const max=ROOM_CEILING_Y-.08;
+    if(apparatusTopYFor(s)>max){
+     // A final conservative length cap also avoids rounding over the roof.
+     const excess=apparatusTopYFor(s)-max+.015;
+     if(s.second){
+      const reducible=Math.min(Math.max(0,s.L2-.05),excess);
+      s.L2=Math.max(.05,s.L2-reducible);
+      s.L=Math.max(.15,s.L-(excess-reducible));
+     }else s.L=Math.max(.15,s.L-excess);
+     enforceLimit('L');
+    }
+   }
+  });
+ }
+ Object.assign(s,unitStates[activeUnit]);
+ // Reapply the active unit's UI restrictions and parameters, and show the lab.
+ enforceLimit('L');
+ resetUnitDisplay();
+ s.room=true;$('roomToggle').checked=true;
+ reset();dirty=true;
+ if(activateIndoor){
+  // Return from a distant panorama or high view directly to the actual lab.
+  const many=unitStates.length;
+  camera.yaw=0;camera.pitch=.13;
+  camera.dist=many===1?2.05:many===2?4.0:5.2;
+  camera.tx=0;camera.ty=1.08;camera.tz=0;
+  currentView='front';
+  document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el.dataset.view==='front'));
+  $('heightViewBtn').classList.remove('active');
+ }
+ clampIndoorCamera();
+ buildRoom();
+ updateSceneTitle();
 }
 $('indoorMode').addEventListener('change',updateIndoor);
 $('showMeasurements').addEventListener('change',e=>s.showMeasurements=e.target.checked);
