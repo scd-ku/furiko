@@ -487,7 +487,7 @@ function addYashimaMesa(cx,cz){
   {hx:1980,hz:630,y:274},
   {hx:1900,hz:575,y:summitY}
  ];
- const colors=['#82976c','#7d9167','#88836a','#77725f','#6e805f'];
+ const colors=['#829b6b','#789363','#78945f','#718b5e','#6e865a'];
  const meshes=rings.map(r=>makeRing(r.hx,r.hz,r.y));
  for(let r=0;r<meshes.length-1;r++){
   const outer=meshes[r],inner=meshes[r+1],col=colors[r];
@@ -497,7 +497,7 @@ function addYashimaMesa(cx,cz){
   }
  }
  const top=meshes[meshes.length-1],center=[cx,287,cz];
- for(let i=0;i<count;i++)tri(center,top[(i+1)%count],top[i],'#748c62');
+ for(let i=0;i<count;i++)tri(center,top[(i+1)%count],top[i],'#6f8c5d');
 }
 
 // Authentic PLATEAU geometry is used only after a validated JSON asset exists.
@@ -628,7 +628,7 @@ function addHeightComparisonRuler(){
 // Repeating non-overlapping ground tiles cover the entire camera range.
 function addVirtualCity(){
  const tile=3600;
- const groundColors=['#503528','#563a2c','#5b3e2e','#52372a','#4c3226'];
+ const groundColors=['#789568','#809b6d','#748e62','#829d70','#6f895d'];
  for(let ix=-12;ix<12;ix++)for(let iz=-12;iz<12;iz++){
   const x0=ix*tile,z0=iz*tile,x1=x0+tile,z1=z0+tile;
   const color=groundColors[Math.abs((ix*31+iz*17)%groundColors.length)];
