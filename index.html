@@ -638,8 +638,8 @@ function addVirtualCity(){
  // Stagger road-plane heights at intersections so no coplanar surfaces fight.
  for(let x=-2340;x<=2340;x+=195){
   box(x,-.079,0,24,.052,3930,Math.abs(x)<24?avenue:road);
-  box(x-16,-.079,0,4,.054,3930,walk);
-  box(x+16,-.079,0,4,.054,3930,walk);
+  box(x-16,-.037,0,4,.054,3930,walk);
+  box(x+16,-.037,0,4,.054,3930,walk);
  }
  for(let z=-1755;z<=1755;z+=195){
   box(0,-.061,z,4790,.055,27,Math.abs(z)<20?avenue:road);
@@ -660,7 +660,7 @@ function addVirtualCity(){
    box(x,-.036,z,148,.055,148,park);
    box(x,-.007,z,3.1,.015,148,path);
    box(x,-.007,z,148,.015,3.1,path);
-   for(const [dx,dz] of [[-42,-37],[39,34],[-40,43],[45,-43]]){
+   for(const [dx,dz] of [[-42,-37],[39,34]]){
     const h=5+hash(ix+dx,iz+dz,3)*3.2;
     cyl([x+dx,.05,z+dz],[x+dx,h*.48,z+dz],.56,'#5e6758',6);
     ball([x+dx,h*.78,z+dz],h*.36,'#63886c',6,9);
@@ -681,14 +681,14 @@ function addVirtualCity(){
   box(x,baseH*.5-.055,z,frontage,baseH,depth,col);
   box(x,baseH+.4,z,frontage*.83,.72,depth*.84,'#8d999a');
   if(baseH>22){
-   for(const side of [-1,1]){
-    box(x,baseH*.55,z+side*(depth/2+.015),frontage*.84,baseH*.53,.06,glass);
-    for(let q=-2;q<=2;q++)
-     box(x+q*frontage*.15,baseH*.55,z+side*(depth/2+.056),.5,baseH*.53,.05,col);
-    for(let q=1;q<=4;q++){
-     const y=baseH*.28+q*baseH*.095;
-     box(x,y,z+side*(depth/2+.061),frontage*.84,.27,.05,'#c5c6c0');
-    }
+   const frontZ=z+depth/2+.03;
+   box(x,baseH*.55,frontZ,frontage*.84,baseH*.53,.06,glass);
+   box(x,baseH*.55,z-depth/2-.03,frontage*.84,baseH*.53,.06,glass);
+   for(let q=-1;q<=1;q++)
+    box(x+q*frontage*.25,baseH*.55,frontZ+.04,.65,baseH*.53,.04,col);
+   for(let q=1;q<=3;q++){
+    const y=baseH*.28+q*baseH*.13;
+    box(x,y,frontZ+.05,frontage*.84,.32,.05,'#c5c6c0');
    }
   }
   if(hash(ix,iz,3)>.53){
@@ -1243,17 +1243,23 @@ function pointerPolar(e,center){
 function clampIndoorCamera(){
  if(s.indoor){
   camera.tx=clamp(camera.tx,-2.9,2.9);camera.tz=clamp(camera.tz,-3.0,2.6);
-  camera.ty=clamp(camera.ty,.75,2.35);camera.pitch=clamp(camera.pitch,-.26,.46);
-  camera.yaw=clamp(camera.yaw,-1.60,1.60);camera.dist=clamp(camera.dist,.65,5.6);
+  camera.ty=clamp(camera.ty,.75,2.35);
+  camera.yaw=clamp(camera.yaw,-1.60,1.60);
+  camera.dist=clamp(camera.dist,.65,5.6);
+  const minEye=.90;
+  camera.ty=Math.max(camera.ty,minEye-camera.dist*Math.sin(.46)+.01);
+  const pitchFloor=Math.asin(clamp((minEye-camera.ty)/camera.dist,-.99,.99));
+  camera.pitch=clamp(Math.max(camera.pitch,pitchFloor+.002),-.26,.46);
   return;
  }
- // For every outdoor drag, zoom and camera preset: keep both the orbit target
- // and the actual camera eye above the ground, never viewing from underneath.
+ // Never let the outside observer move under the street / terrain surface,
+ // even when an orbit, pan, wheel-zoom or scene preset changes camera position.
  camera.tx=clamp(camera.tx,-10000,10000);camera.tz=clamp(camera.tz,-10000,10000);
  camera.ty=clamp(camera.ty,.85,5000);camera.dist=clamp(camera.dist,.55,8000);
- const clearance=1.4;
- const minPitch=Math.asin(clamp((clearance-camera.ty)/camera.dist,-.99,.99));
- camera.pitch=clamp(Math.max(camera.pitch,minPitch+.001),-.39,1.45);
+ const minEye=1.4;
+ camera.ty=Math.max(camera.ty,minEye-camera.dist*Math.sin(1.45)+.01);
+ const pitchFloor=Math.asin(clamp((minEye-camera.ty)/camera.dist,-.99,.99));
+ camera.pitch=clamp(Math.max(camera.pitch,pitchFloor+.002),-.39,1.45);
 }
 function allBobTargets(){const targets=[];for(let i=0;i<unitStates.length;i++){const q=i===activeUnit?s:unitStates[i],x=unitOffset(i),h=apparatusPivotHeight(q);const px=x,py=h,pz=pivot[2]+.016;const x1=px+q.L*Math.sin(q.theta),y1=py-q.L*Math.cos(q.theta);targets.push({unit:i,bob:1,pos:[x1,y1,pz]});if(q.second)targets.push({unit:i,bob:2,pos:[x1+q.L2*Math.sin(q.theta2),y1-q.L2*Math.cos(q.theta2),pz]})}return targets}
 function apparatusPivotHeight(q){const r=Math.max(.023,Math.min(.076,.038*Math.cbrt(q.m/200))),r2=Math.max(.023,Math.min(.076,.038*Math.cbrt(q.m2/200)));const ext=Math.min((s.indoor?3:1000)-.76-.684,Math.max(0,q.L+(q.second?q.L2:0)-.60,(q.L+(q.second?q.L2+Math.max(r,r2):r)+.09)-.605,q.poleHeight-.76-.684));return .76+.605+ext}
