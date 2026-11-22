@@ -118,7 +118,21 @@ if(primary){for(let side of [-1,1]){box(x-.38,y-.205,z+side*.27,.18,.08,.04,'#d6
 function stool(x,z){cyl([x,.52,z],[x,.55,z],.19,'#9e7855',18);for(const [a,b] of [[-.14,-.14],[.14,-.14],[-.14,.14],[.14,.14]])cyl([x+a,.02,z+b],[x+a*.70,.515,z+b*.70],.015,'#a4afac',8)}
 const ROOM_CEILING_Y=3.0;
 function bobRadius(){let r=.038*Math.cbrt(s.m/200);return clamp(r,.023,.076)}
-function roomNeedsOpenSky(){return !s.indoor&&apparatusMetrics().topY>.97*ROOM_CEILING_Y}
+function apparatusTopYFor(q){
+ const baseTop=.76,bodyH=.684,scaleH=.60;
+ const r=clamp(.038*Math.cbrt(q.m/200),.023,.076),r2=.038*Math.cbrt((q.m2||100)/200);
+ const minPivotY=baseTop+q.L+(q.second?q.L2+Math.max(r,r2):r)+.09;
+ const ext=Math.max(0,q.L+(q.second?q.L2:0)-scaleH,minPivotY-(baseTop+.605),(q.poleHeight||1.5)-baseTop-bodyH);
+ return baseTop+bodyH+clamp(ext,0,1000-baseTop-bodyH);
+}
+function roomNeedsOpenSky(){
+ if(s.indoor)return false;
+ for(let i=0;i<unitStates.length;i++){
+  const q=i===activeUnit?s:unitStates[i];
+  if(apparatusTopYFor(q)>ROOM_CEILING_Y+.001)return true;
+ }
+ return apparatusTopYFor(s)>ROOM_CEILING_Y+.001;
+}
 function buildRoom(){mesh=[];let floorY=-.018;const ceilingY=ROOM_CEILING_Y, openSky=roomNeedsOpenSky();
 if(openSky){
  // broad green terrain around the school, horizon visible above the classroom
@@ -143,20 +157,19 @@ if(openSky){
  }
 }
 
-box(0,floorY-.07,-1.5,16,.14,18,'#ffffff');for(let x=-7.5;x<=7.5;x+=.5)line([x,floorY+.003,-10],[x,floorY+.003,7],.002,'#e5e5e5');for(let z=-10;z<=7;z+=.5)line([-8,floorY+.003,z],[8,floorY+.003,z],.002,'#e5e5e5');
-// walls leave front open; ceiling follows the standard 3.0m classroom reference height
-box(0,ceilingY/2,-9.25,16,ceilingY,.14,'#ffffff');box(-8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');box(8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');
-// windows
-for(const z of [-6.7,-3.8,-.9,2.0]){ box(-7.88,2.02,z,.19,1.7,2.45,'#ffffff');box(-7.775,2.02,z,.038,1.54,2.24,'#b7d9e2'); box(-7.738,2.02,z,.055,.06,2.29,'#ffffff');box(-7.738,2.02,z,.055,1.6,.055,'#ffffff'); box(-7.738,1.23,z,.065,.055,2.29,'#ffffff'); }
-// front blackboard and rail
-box(-2.2,1.75,-9.13,4.8,1.4,.045,'#325b4c');box(-2.2,1.02,-9.04,4.9,.045,.13,'#b8b8b8');box(-2.2,1.75,-9.09,4.89,1.5,.025,'#c5c5c5');box(-2.2,1.75,-9.04,4.73,1.37,.026,'#32564a');
-// cupboard and right windows
-box(3.7,1.82,-9.09,2.25,1.26,.075,'#ffffff');box(3.7,1.82,-9.035,2.08,1.10,.025,'#ffffff');
-for(const z of [-6.5,-3.7,-.9,1.9]){box(7.88,2.0,z,.18,1.65,2.35,'#ffffff');box(7.775,2.0,z,.035,1.48,2.16,'#bdd5dc');box(7.74,2.0,z,.07,1.55,.07,'#ffffff');box(7.74,2.0,z,.07,.07,2.2,'#ffffff');}
-for(const x of [-6.85,6.85]){box(x,1.11,-8.35,1.15,2.15,.48,'#ffffff');for(let j=0;j<3;j++){box(x,1.8-j*.58,-8.04,1.03,.018,.02,'#b3b3b3')}box(x,2.19,-8.04,1.05,.028,.026,'#aaaaaa');}
-if(!openSky){box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7'); for(const z of [-6,-2.5,1,4.5])for(const x of [-3.6,0,3.6]){box(x,ceilingY-.12,z,.24,.04,1.5,'#eeeeee');box(x,ceilingY-.16,z,.18,.03,1.39,'#ffffff')}}
-for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
-box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
+if(!openSky){
+ box(0,floorY-.07,-1.5,16,.14,18,'#ffffff');for(let x=-7.5;x<=7.5;x+=.5)line([x,floorY+.003,-10],[x,floorY+.003,7],.002,'#e5e5e5');for(let z=-10;z<=7;z+=.5)line([-8,floorY+.003,z],[8,floorY+.003,z],.002,'#e5e5e5');
+ // Interior architecture and furnishings are drawn only while the apparatus remains indoors.
+ box(0,ceilingY/2,-9.25,16,ceilingY,.14,'#ffffff');box(-8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');box(8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');
+ for(const z of [-6.7,-3.8,-.9,2.0]){ box(-7.88,2.02,z,.19,1.7,2.45,'#ffffff');box(-7.775,2.02,z,.038,1.54,2.24,'#b7d9e2'); box(-7.738,2.02,z,.055,.06,2.29,'#ffffff');box(-7.738,2.02,z,.055,1.6,.055,'#ffffff'); box(-7.738,1.23,z,.065,.055,2.29,'#ffffff'); }
+ box(-2.2,1.75,-9.13,4.8,1.4,.045,'#325b4c');box(-2.2,1.02,-9.04,4.9,.045,.13,'#b8b8b8');box(-2.2,1.75,-9.09,4.89,1.5,.025,'#c5c5c5');box(-2.2,1.75,-9.04,4.73,1.37,.026,'#32564a');
+ box(3.7,1.82,-9.09,2.25,1.26,.075,'#ffffff');box(3.7,1.82,-9.035,2.08,1.10,.025,'#ffffff');
+ for(const z of [-6.5,-3.7,-.9,1.9]){box(7.88,2.0,z,.18,1.65,2.35,'#ffffff');box(7.775,2.0,z,.035,1.48,2.16,'#bdd5dc');box(7.74,2.0,z,.07,1.55,.07,'#ffffff');box(7.74,2.0,z,.07,.07,2.2,'#ffffff');}
+ for(const x of [-6.85,6.85]){box(x,1.11,-8.35,1.15,2.15,.48,'#ffffff');for(let j=0;j<3;j++){box(x,1.8-j*.58,-8.04,1.03,.018,.02,'#b3b3b3')}box(x,2.19,-8.04,1.05,.028,.026,'#aaaaaa');}
+ box(0,ceilingY+0.02,-1.5,16,.04,18,'#f7fbf7'); for(const z of [-6,-2.5,1,4.5])for(const x of [-3.6,0,3.6]){box(x,ceilingY-.12,z,.24,.04,1.5,'#eeeeee');box(x,ceilingY-.16,z,.18,.03,1.39,'#ffffff')}
+ for(const z of [-5.6,-2.9,3.3])for(const x of [-4.0,0,4.0]){labTable(x,z);stool(x-1.12,z+.15);stool(x+1.12,z+.15);stool(x-1.12,z-.33);stool(x+1.12,z-.33)}
+ box(-1,.76,-8.1,3.2,.07,.76,'#313a39');box(-1,.37,-8.1,2.78,.7,.54,'#ffffff');
+}
 roomCount=upload(roomBuf)}
 const s={plotter:false,indoor:true,showMeasurements:false,poleHeight:1.5,L:.65,m:200,a0:25,theta:25*RAD,omega:0,second:false,L2:.35,m2:100,a02:-15,theta2:-15*RAD,omega2:0,t:0,playing:false,track:[],trajectory:true,room:true};
 // Per-apparatus settings are independent; only the playback transport is shared.
@@ -210,7 +223,7 @@ function refreshUnitTabs(){
 }
 function selectUnit(i){
  persistActive();activeUnit=i;Object.assign(s,unitStates[i]);pivot[0]=unitOffset(i);
- enforceLimit('L');readParams();resetUnitDisplay();refreshUnitTabs();dirty=true;
+ enforceLimit('L');readParams();resetUnitDisplay();refreshUnitTabs();dirty=true;buildRoom();
 }
 function resetUnitDisplay(){document.getElementById('doubleEnabled').checked=s.second;document.getElementById('secondParams').hidden=!s.second;document.getElementById('angle').value=s.a0;document.getElementById('angleNum').value=s.a0;updateStats()}
 function adjustComparisonCamera(){
@@ -477,6 +490,16 @@ function apparatusMetrics(){const baseTop=.76, bodyH=.684, scaleH=.60, r=bobRadi
 function reset(){history.length=0;s.playing=false;persistActive();for(let i=0;i<unitStates.length;i++)runUnit(i,()=>{s.t=0;s.theta=s.a0*RAD;s.omega=0;s.theta2=s.a02*RAD;s.omega2=0;s.track=[]});$('start').textContent='▶ 開始';$('status').textContent='停止中';updateStats()}
 function readParams(){for(const [id,key] of [['length','L'],['mass','m'],['angle','a0'],['poleHeight','poleHeight']]){$(id).value=s[key];$(id+'Num').value=(key==='L'||key==='poleHeight')?s[key].toFixed(2):s[key].toFixed(0)}}
 for(const [id,key,min,max,round] of [['length','L',.15,1000,.01],['mass','m',20,1000,10],['angle','a0',-80,80,1]]){for(const kind of ['', 'Num'])$(id+kind).addEventListener(kind?'change':'input',e=>{let v=+e.target.value;if(!Number.isFinite(v))return;s[key]=Math.round(clamp(v,min,max)/round)*round;readParams();enforceLimit(key);reset();if(key==='L'||key==='m'){dirty=true;buildRoom();const M=apparatusMetrics();camera.ty=1.08+Math.max(0,M.topY-1.08)*.28;camera.dist=Math.max(camera.dist,2.05+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35)}})}
+function updatePoleHeightFromControl(value){
+ const v=Number(value);if(!Number.isFinite(v))return;
+ s.poleHeight=clamp(v,1.5,s.indoor?3:1000);
+ enforceLimit('poleHeight');reset();dirty=true;buildRoom();
+ const M=apparatusMetrics();
+ if(!s.indoor){camera.ty=Math.max(1.08,M.topY*.38);camera.dist=Math.max(2.05,M.topY*1.5)}
+ clampIndoorCamera();
+}
+$('poleHeight').addEventListener('input',e=>updatePoleHeightFromControl(e.target.value));
+$('poleHeightNum').addEventListener('change',e=>updatePoleHeightFromControl(e.target.value));
 function enforceLimit(which){
  const limitHeight=s.indoor?3:1000,base=.76+.605,margin=.09;
  const r1=bobRadius(),r2=clamp(.038*Math.cbrt(s.m2/200),.023,.076);
