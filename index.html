@@ -134,8 +134,14 @@ function roomNeedsOpenSky(){
  }
  return apparatusTopYFor(s)>ROOM_CEILING_Y+.001;
 }
-function buildRoom(){mesh=[];let floorY=-.018;const ceilingY=ROOM_CEILING_Y, openSky=roomNeedsOpenSky();
-if(openSky){
+function showOutdoorBackdrop(){
+ // Show exterior scenery whenever the indoor height restriction is disabled,
+ // while keeping the classroom itself until the support exceeds the ceiling.
+ return !s.indoor || roomNeedsOpenSky();
+}
+function buildRoom(){mesh=[];let floorY=-.018;
+ const ceilingY=ROOM_CEILING_Y,roofExceeded=roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
+if(outdoorBackdrop){
  // broad green terrain around the school, horizon visible above the classroom
  box(0,-.38,-650,3000,.52,3000,'#8cab73');
  for(let k=0;k<100;k++){const x=((k*137)%1840)-920,z=-80-((k*229)%1150);box(x,-.105,z,5+(k%5)*3,.09,3+(k%7)*2,k%3===0?'#9fc17d':'#82a966')}
@@ -158,7 +164,7 @@ if(openSky){
  }
 }
 
-if(!openSky){
+if(!roofExceeded){
  box(0,floorY-.07,-1.5,16,.14,18,'#ffffff');for(let x=-7.5;x<=7.5;x+=.5)line([x,floorY+.003,-10],[x,floorY+.003,7],.002,'#e5e5e5');for(let z=-10;z<=7;z+=.5)line([-8,floorY+.003,z],[8,floorY+.003,z],.002,'#e5e5e5');
  // Interior architecture and furnishings are drawn only while the apparatus remains indoors.
  box(0,ceilingY/2,-9.25,16,ceilingY,.14,'#ffffff');box(-8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');box(8,ceilingY/2,-1.5,.14,ceilingY,15.5,'#ffffff');
@@ -459,11 +465,11 @@ function drawPlotterTimeLabels(){
 }
 function render(){const [w,h]=resize(glCanvas);if(!w||!h)return;
 let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];let proj=perspective(48*RAD,w/h,.04,4000),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
-const openSky=roomNeedsOpenSky(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(openSky?.60:1.0,openSky?.80:1.0,openSky?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room)drawBuffer(roomBuf,roomCount);drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
+const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room)drawBuffer(roomBuf,roomCount);drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
 else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels()}
 function renderSoftware(w,h){const ctx=canvas2d;
  const img=ctx.createImageData(w,h),pixels=img.data,depthBuf=new Float32Array(w*h);
- const sky=roomNeedsOpenSky();for(let i=0;i<w*h;i++){depthBuf[i]=1;pixels[i*4]=sky?153:255;pixels[i*4+1]=sky?204:255;pixels[i*4+2]=sky?250:255;pixels[i*4+3]=255}
+ const sky=showOutdoorBackdrop();for(let i=0;i<w*h;i++){depthBuf[i]=1;pixels[i*4]=sky?153:255;pixels[i*4+1]=sky?204:255;pixels[i*4+2]=sky?250:255;pixels[i*4+3]=255}
  const sources=s.room?[roomBuf,staticBuf,dynamicBuf]:[staticBuf,dynamicBuf];
  for(const name of sources){const arr=fallbackMeshes.get(name);if(!arr)continue;
  for(let i=0;i<arr.length;i+=27){let pts=[],normal=[arr[i+3],arr[i+4],arr[i+5]],col=[arr[i+6],arr[i+7],arr[i+8]],invalid=false;
@@ -526,7 +532,7 @@ function updateSceneTitle(){
   ?'実験器の最上部が天井高3mを超えたため、屋外の風景を表示しています'
   :s.indoor
    ?'屋内モード｜支柱の高さ上限3m・視点を理科室内に制限'
-   :'屋内表示｜高さ上限を解除中。天井を超えると屋外に切り替わります';
+   :'理科室は維持したまま周囲の草原と青空を表示します。支柱が天井を超えると屋外の風景に切り替わります';
 }
 function updateIndoor(){
  // The checkbox changes the height cap and camera restriction, not the room itself.
