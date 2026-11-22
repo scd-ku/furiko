@@ -423,27 +423,50 @@ function addYashimaMesa(cx,cz){
 // Authentic PLATEAU geometry is used only after a validated JSON asset exists.
 // Until then the handmade landmarks remain visible; do not label them PLATEAU.
 const verifiedPlateauAssets={tower:null,skytree:null};
+function unpackVerifiedPlateau(model){
+ if(model.format!=='q16-vf-v1')return Array.isArray(model.triangles)&&model.triangles.length>=100;
+ const nv=model.vertex_count,nf=model.face_count;
+ if(!Number.isInteger(nv)||!Number.isInteger(nf)||nv<100||nf<100||nf>100000||nv>65535||model.unit_m<=0)return false;
+ const raw=atob(model.data||'');
+ if(raw.length!==6*(nv+nf))return false;
+ const data=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)data[i]=raw.charCodeAt(i);
+ const view=new DataView(data.buffer),positions=new Array(nv),indices=new Uint16Array(nf*3);
+ for(let i=0;i<nv;i++)positions[i]=[
+  model.origin_m[0]+view.getUint16(i*6,true)*model.unit_m,
+  model.origin_m[1]+view.getUint16(i*6+2,true)*model.unit_m,
+  model.origin_m[2]+view.getUint16(i*6+4,true)*model.unit_m];
+ const base=nv*6;
+ for(let i=0;i<nf*3;i++){const k=view.getUint16(base+i*2,true);if(k>=nv)return false;indices[i]=k}
+ model._vertices=positions;model._faces=indices;
+ return true;
+}
 function addVerifiedPlateau(id,cx,cz){
- const model=verifiedPlateauAssets[id];
- if(!model||model.source!=='PLATEAU'||model.landmark!==id||!Array.isArray(model.triangles)||model.triangles.length===0)return false;
- const colors=id==='tower'?['#ed4a2c','#ecebea']:['#dbe5e8'];
- for(const points of model.triangles){
-  if(!Array.isArray(points)||points.length!==9||!points.every(Number.isFinite))continue;
-  const h=(points[1]+points[4]+points[7])/3;
-  const col=id==='tower'?(h<125?colors[0]:h<225?colors[Math.min(3,Math.floor((h-125)/25))%2]:colors[0]):colors[0];
-  tri([cx+points[0],points[1],cz+points[2]],
-      [cx+points[3],points[4],cz+points[5]],
-      [cx+points[6],points[7],cz+points[8]],col);
+ const m=verifiedPlateauAssets[id];
+ if(!m||m.source!=='PLATEAU'||m.landmark!==id)return false;
+ const colorFor=h=>id==='tower'
+  ? h<125?'#e84c2d':h<225?(Math.min(3,Math.floor((h-125)/25))%2===0?'#e84c2d':'#e9e7e4'):'#ed4a2c'
+  :'#dbe5e8';
+ if(m._vertices&&m._faces){
+  for(let i=0;i<m._faces.length;i+=3){
+   const a=m._vertices[m._faces[i]],b=m._vertices[m._faces[i+1]],c=m._vertices[m._faces[i+2]];
+   tri([cx+a[0],a[1],cz+a[2]],[cx+b[0],b[1],cz+b[2]],[cx+c[0],c[1],cz+c[2]],colorFor((a[1]+b[1]+c[1])/3));
+  }
+  return true;
+ }
+ if(!Array.isArray(m.triangles)||m.triangles.length<100)return false;
+ for(const p of m.triangles){if(!Array.isArray(p)||p.length!==9||!p.every(Number.isFinite))continue;
+  tri([cx+p[0],p[1],cz+p[2]],[cx+p[3],p[4],cz+p[5]],[cx+p[6],p[7],cz+p[8]],colorFor((p[1]+p[4]+p[7])/3));
  }
  return true;
 }
 function loadVerifiedPlateauModels(){
  for(const [id,url] of [['tower','assets/plateau_tokyo_tower.json'],['skytree','assets/plateau_tokyo_skytree.json']]){
   fetch(url).then(r=>r.ok?r.json():null).then(model=>{
-   if(!model||model.source!=='PLATEAU'||model.landmark!==id||!Array.isArray(model.triangles)||model.triangles.length<100)return;
+   if(!model||model.source!=='PLATEAU'||model.landmark!==id||!unpackVerifiedPlateau(model))return;
    verifiedPlateauAssets[id]=model;buildRoom();
    console.info('PLATEAU source geometry loaded:',id,model.source_file);
-  }).catch(()=>{});
+  }).catch(err=>console.warn('PLATEAU load:',err));
  }
 }
 function buildRoom(){mesh=[];let floorY=-.018;
