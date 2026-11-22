@@ -184,8 +184,3 @@ result={
 OUT.write_text(json.dumps(result,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
 print('final JSON',OUT.stat().st_size,'texture image',len(photo),'bytes','source bldg id',b.get(GML_ID));
 print('bounds local:', verts.min(axis=0), verts.max(axis=0))
-# Transfer as 1200-char lines for connector-safe read and publishing.
-raw=OUT.read_text(encoding='utf-8')
-chunked=Path('/mnt/data/plateau_tokyo_skytree_import_chunked.txt')
-chunked.write_text('\n'.join(raw[i:i+1200] for i in range(0,len(raw),1200))+'\n',encoding='utf-8')
-print('upload transport',chunked, 'lines',len(raw)//1200+1)
