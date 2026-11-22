@@ -144,41 +144,176 @@ function showOutdoorBackdrop(){
    Tokyo Tower / TOKYO SKYTREE specifications and Takamatsu City's Yashima
    topography; the models are stylized scene-scale representations. */
 function addTokyoTower(cx,cz){
- const orange='#f04b25',white='#f3f1e9',deck='#e7e5dd';
- const H=270,panels=30,step=H/panels;
- const widthAt=y=>3.2+36.8*Math.pow(Math.max(0,1-y/H),1.08);
- const bandColor=y=>{
-  if(y<150)return Math.floor(y/30)%2===0?orange:white;
-  const band=Math.min(6,Math.floor((y-150)/(120/7)));
-  return band%2===0?orange:white;
+ const orange='#f04b25',white='#f4f2e9',glass='#579eaa',glass2='#78b5bd';
+ // Historical elevation supplied by the user: 125 m main observatory,
+ // 225 m antenna work platform, 254 m lattice summit, 333 m overall.
+ // The registered cultural-property record gives an 80 m leg spacing.
+ const profile=[
+  [0,40],[20,36.5],[50,29.2],[95,20.5],[125,15.4],
+  [150,11.8],[175,8.7],[200,5.8],[225,4.0],[254,2.15]
+ ];
+ const widthAt=y=>{
+  let i=0;while(i<profile.length-2&&y>profile[i+1][0])i++;
+  const [y0,w0]=profile[i],[y1,w1]=profile[i+1];
+  const [yp,wp]=profile[Math.max(0,i-1)],[yn,wn]=profile[Math.min(profile.length-1,i+2)];
+  const t=clamp((y-y0)/(y1-y0),0,1),h=y1-y0;
+  const m0=i===0?(w1-w0)/h:(w1-wp)/(y1-yp);
+  const m1=i===profile.length-2?(w1-w0)/h:(wn-w0)/(yn-y0);
+  const t2=t*t,t3=t2*t;
+  const w=(2*t3-3*t2+1)*w0+(t3-2*t2+t)*h*m0+(-2*t3+3*t2)*w1+(t3-t2)*h*m1;
+  return clamp(w,Math.min(w0,w1),Math.max(w0,w1));
  };
  const corners=[[-1,-1],[1,-1],[1,1],[-1,1]];
- // Four splayed feet lead into four independent corner legs.
- for(const c of corners){
-  line([cx+c[0]*46,-.04,cz+c[1]*46],[cx+c[0]*widthAt(12),12,cz+c[1]*widthAt(12)],2.0,orange);
+ const cornerAt=(c,y)=>[cx+c[0]*widthAt(y),y,cz+c[1]*widthAt(y)];
+ const bandColor=y=>{
+  if(y<125)return orange;
+  if(y<225){
+   const band=Math.min(3,Math.floor((y-125)/25));
+   return band%2===0?orange:white; // orange / white / orange / white
+  }
+  if(y<254)return orange;
+  return orange;
+ };
+ // Four independently curved legs. Their feet are 80 m apart, then sweep
+ // inward with the characteristic bowed profile rather than straight sides.
+ for(let i=0;i<corners.length;i++){
+  const c=corners[i];
+  for(let y=0;y<254;y+=4){
+   const y1=Math.min(254,y+4);
+   const radius=1.55*Math.pow(Math.max(.08,1-y1/285),.55)+.22;
+   line(cornerAt(c,y),cornerAt(c,y1),radius,bandColor((y+y1)/2));
+  }
+  const foot=cornerAt(c,0);
+  box(foot[0],-.55,foot[2],6.2,1.1,6.2,'#777d7d');
+  box(foot[0],.16,foot[2],4.8,.32,4.8,'#aeb4b2');
  }
- for(let i=0;i<panels;i++){
-  const y0=i*step,y1=(i+1)*step,w0=widthAt(y0),w1=widthAt(y1),col=bandColor((y0+y1)*.5);
-  const p0=corners.map(c=>[cx+c[0]*w0,y0,cz+c[1]*w0]);
-  const p1=corners.map(c=>[cx+c[0]*w1,y1,cz+c[1]*w1]);
+ // Closely spaced horizontal and diagonal steel members on all four faces.
+ const levels=[0];
+ for(let y=8;y<254;y+=8)levels.push(y);
+ levels.push(125,225,254);
+ levels.sort((a,b)=>a-b);
+ const ys=levels.filter((y,i)=>i===0||y-levels[i-1]>.001);
+ for(let i=0;i<ys.length-1;i++){
+  const y0=ys[i],y1=ys[i+1],col=bandColor((y0+y1)/2);
   for(let j=0;j<4;j++){
    const k=(j+1)%4;
-   line(p0[j],p1[j],1.45,col);
-   line(p0[j],p0[k],.92,col);
-   line(p0[j],p1[k],.76,col);
-   line(p0[k],p1[j],.76,col);
+   const a0=cornerAt(corners[j],y0),b0=cornerAt(corners[k],y0);
+   const a1=cornerAt(corners[j],y1),b1=cornerAt(corners[k],y1);
+   line(a0,b0,.58,col);
+   line(a1,b1,.58,col);
+   line(a0,b1,.39,col);
+   line(b0,a1,.39,col);
+   // A finer secondary diagonal gives the dense triangular lattice seen in the photograph.
+   if(i%2===0){
+    const mid0=mul(add(a0,b0),.5),mid1=mul(add(a1,b1),.5);
+    line(a0,mid1,.24,col);line(b0,mid1,.24,col);
+    line(mid0,a1,.24,col);line(mid0,b1,.24,col);
+   }
   }
  }
- // Main deck (150 m) and top deck (250 m).
- box(cx,150,cz,37,7,29,deck);
- box(cx,153.8,cz,39,1.0,31,white);
- box(cx,250,cz,19,6,15,deck);
- box(cx,253.4,cz,21,1.0,17,white);
- // Upper antenna mast, from the 270 m steel tower to 333 m.
- for(let i=0;i<7;i++){
-  const y0=270+i*9,y1=i===6?333:270+(i+1)*9;
-  const r0=2.7*(1-i/7)+.35,r1=2.7*(1-(i+1)/7)+.22;
+ // Broad arched braces in the lower tower, visible in the supplied elevation.
+ for(let j=0;j<4;j++){
+  const k=(j+1)%4,pa=cornerAt(corners[j],20),pb=cornerAt(corners[k],20);
+  let previous=null;
+  for(let n=0;n<=32;n++){
+   const u=-1+2*n/32;
+   const p=[
+    pa[0]+(pb[0]-pa[0])*(u+1)/2,
+    20+75*(1-u*u),
+    pa[2]+(pb[2]-pa[2])*(u+1)/2
+   ];
+   if(previous)line(previous,p,.78,orange);
+   previous=p;
+  }
+ }
+ // Main observatory at 120–126 m: chamfered rectangular plan, broad two-tier
+ // silhouette, orange structural fascia and blue-green glazed window band.
+ const outline=[
+  [-18.2,-13.0],[18.2,-13.0],[21.5,-9.7],[21.5,9.7],
+  [18.2,13.0],[-18.2,13.0],[-21.5,9.7],[-21.5,-9.7]
+ ];
+ const yBottom=120.2,yGlass0=121.4,yGlass1=125.4,yTop=126.4;
+ const bottom=outline.map(p=>[cx+p[0],yBottom,cz+p[1]]);
+ const top=outline.map(p=>[cx+p[0],yTop,cz+p[1]]);
+ const center=[cx,(yBottom+yTop)/2,cz];
+ for(let i=0;i<outline.length;i++){
+  const j=(i+1)%outline.length;
+  quad(bottom[i],bottom[j],top[j],top[i],'#d9dedb');
+  tri([cx,yBottom,cz],bottom[j],bottom[i],'#c9ceca');
+  tri([cx,yTop,cz],top[i],top[j],'#e9ece8');
+  const x0=outline[i][0],z0=outline[i][1],x1=outline[j][0],z1=outline[j][1];
+  const mx=(x0+x1)/2,mz=(z0+z1)/2,normXZ=Math.hypot(mx,mz)||1;
+  const ox=mx/normXZ*.075,oz=mz/normXZ*.075;
+  const p0=[cx+x0+ox,yGlass0,cz+z0+oz],p1=[cx+x1+ox,yGlass0,cz+z1+oz];
+  const q1=[cx+x1+ox,yGlass1,cz+z1+oz],q0=[cx+x0+ox,yGlass1,cz+z0+oz];
+  quad(p0,p1,q1,q0,glass);
+  line(p0,p1,.20,orange);line(q0,q1,.28,white);
+  for(let n=1;n<6;n++){
+   const t=n/6,x=cx+x0+(x1-x0)*t+ox,z=cz+z0+(z1-z0)*t+oz;
+   line([x,yGlass0,z],[x,yGlass1,z],.105,glass2);
+  }
+ }
+ // Upper and lower continuous rims, plus the distinctive sloped deck shoulders.
+ for(let i=0;i<outline.length;i++){
+  const j=(i+1)%outline.length;
+  line(top[i],top[j],.48,white);
+  line(bottom[i],bottom[j],.42,orange);
+  const p=[cx+outline[i][0],yGlass0,cz+outline[i][1]];
+  const q=[cx+outline[i][0]*.91,119.1,cz+outline[i][1]*.91];
+  line(p,q,.62,orange);
+ }
+ // Four paired brackets connect the deck to the tower legs.
+ for(const c of corners){
+  line(cornerAt(c,116),[cx+c[0]*19.4,120.2,cz+c[1]*11.4],.75,orange);
+  line(cornerAt(c,112),[cx+c[0]*18.2,120.2,cz+c[1]*10.4],.48,white);
+ }
+ // Round antenna-maintenance platform at 225 m: a real annular deck,
+ // with outer guardrail, radial supports and an open centre around the mast.
+ const seg=40,outerR=8.1,innerR=3.55,platformBottom=223.7,platformTop=226.1;
+ for(let i=0;i<seg;i++){
+  const a=i*2*Math.PI/seg,b=(i+1)*2*Math.PI/seg;
+  const point=(r,y,t)=>[cx+r*Math.cos(t),y,cz+r*Math.sin(t)];
+  const ob0=point(outerR,platformBottom,a),ob1=point(outerR,platformBottom,b);
+  const ot0=point(outerR,platformTop,a),ot1=point(outerR,platformTop,b);
+  const ib0=point(innerR,platformBottom,a),ib1=point(innerR,platformBottom,b);
+  const it0=point(innerR,platformTop,a),it1=point(innerR,platformTop,b);
+  quad(ob0,ob1,ot1,ot0,'#bfc7c5');
+  quad(ib1,ib0,it0,it1,'#aeb8b6');
+  quad(ot0,ot1,it1,it0,'#e8ece8');
+  quad(ob1,ob0,ib0,ib1,'#9da8a6');
+  line(ot0,ot1,.22,white);
+  line(point(outerR,227.6,a),point(outerR,227.6,b),.20,white);
+  line(point(outerR,226.1,a),point(outerR,227.6,a),.12,white);
+  if(i%5===0){
+   line(point(innerR,221.4,a),point(outerR,223.7,a),.24,orange);
+   line(point(innerR,226.1,a),point(outerR,226.1,a),.18,white);
+  }
+ }
+ // Short lattice crown between the work platform and the 254 m antenna base.
+ for(let y=226;y<254;y+=4){
+  const y1=Math.min(254,y+4),w0=widthAt(y),w1=widthAt(y1);
+  for(let j=0;j<4;j++){
+   const k=(j+1)%4,a=[cx+corners[j][0]*w0,y,cz+corners[j][1]*w0],
+    b=[cx+corners[k][0]*w0,y,cz+corners[k][1]*w0],
+    c=[cx+corners[j][0]*w1,y1,cz+corners[j][1]*w1],
+    d=[cx+corners[k][0]*w1,y1,cz+corners[k][1]*w1];
+   line(a,b,.38,orange);line(a,d,.30,orange);line(b,c,.30,orange);
+  }
+ }
+ // Tapered aerial mast from 254 m to the 333 m tip, in alternating
+ // International Orange and white painted sections.
+ for(let i=0;i<8;i++){
+  const y0=254+i*(79/8),y1=254+(i+1)*(79/8);
+  const r0=1.75*(1-i/8)+.12,r1=1.75*(1-(i+1)/8)+.055;
   cyl([cx,y0,cz],[cx,y1,cz],r0,i%2===0?orange:white,12,r1);
+  if(i<7)line([cx,y1,cz],[cx,y1+.7,cz],.10,white);
+ }
+ // A fine aerial tip and a few visible antenna stays.
+ cyl([cx,333,cz],[cx,334,cz],.07,orange,8,.025);
+ for(let j=0;j<4;j++){
+  const a=j*Math.PI/2;
+  line([cx+1.45*Math.cos(a),254,cz+1.45*Math.sin(a)],
+       [cx+.24*Math.cos(a),270,cz+.24*Math.sin(a)],.12,white);
  }
 }
 function addTokyoSkytree(cx,cz){
