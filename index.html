@@ -42,7 +42,7 @@
 <div class="param" style="padding-top:4px"><label class="check"><input type="checkbox" id="doubleEnabled">おもりをもう1個つなげる</label><div id="secondParams" hidden><div class="paramhead"><label for="length2">2本目のひもの長さ L₂</label><div class="number"><input id="length2Num" type="number" min="0.05" max="999" step="0.01" value="0.35"><span>m</span></div></div><input id="length2" class="range" type="range" min="0.05" max="999" step="0.01" value="0.35"><div class="paramhead"><label for="mass2">2つ目のおもりの重さ m₂</label><div class="number"><input id="mass2Num" type="number" min="20" max="1000" step="10" value="100"><span>g</span></div></div><input id="mass2" class="range" type="range" min="20" max="1000" step="10" value="100"><div class="paramhead"><label for="angle2">2本目の初期角度 θ₂</label><div class="number"><input id="angle2Num" type="number" min="-80" max="80" step="1" value="-15"><span>°</span></div></div><input id="angle2" class="range" type="range" min="-80" max="80" step="1" value="-15"><p class="tip" id="limitInfo">支柱の高さ1000mまで自動伸長。2本の長さと球の半径を考慮して制限します。</p></div></div></section>
 <section class="panel"><h2>表示設定 <span class="eyebrow">DISPLAY</span></h2>
 <label class="check"><input id="trajectory" type="checkbox" checked>振れ幅の軌跡</label><label class="check"><input id="plotterToggle" type="checkbox">ペンプロッタ（記録紙に振動を描く）</label>
-<label class="check"><input id="roomToggle" type="checkbox" checked>理科室を表示</label>
+<label class="check"><input id="roomToggle" type="checkbox" checked>周囲の環境を表示</label>
 <label class="check"><input id="indoorMode" type="checkbox" checked>屋内モード（天井高 3m）</label>
 <label class="check"><input id="showMeasurements" type="checkbox">おもりの重さ・ひもの長さ・速度を表示</label></section>
 <section class="panel"><h2>実験上の注意</h2><div class="callout">屋外ボタンを押すと、支柱の高さに関係なく理科室の壁・天井を非表示にし、草原・青空・遠景を表示します。屋外では支柱を最大1000mまで伸ばせます。屋内では天井高3.0mを基準に支柱の伸長を制限します。支柱側の定規は回転軸側を0として表示します。</div></section>
@@ -532,7 +532,7 @@ function setEnvironmentMode(indoor,view){
  }
  clampIndoorCamera();updateSceneTitle();
  document.querySelectorAll('[data-view],#outdoorBtn').forEach(el=>{
-  const active=view==='outdoor'?el.id==='outdoorBtn':view==='room'?el.dataset.view==='room':el.dataset.view===view;
+  const active=el.id==='outdoorBtn'?!s.indoor:el.dataset.view==='room'?s.indoor&&view==='room':el.dataset.view===view;
   el.classList.toggle('active',active);
  });
 }
@@ -554,7 +554,10 @@ for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{
  const v=presets[b.dataset.view],M=apparatusMetrics();currentView=b.dataset.view;
  camera.yaw=v[0];camera.pitch=v[1];camera.dist=v[2]+Math.max(0,s.L-1)*.95+Math.max(0,M.topY-ROOM_CEILING_Y)*.35;
  camera.tx=0;camera.tz=0;camera.ty=s.indoor?1.08:Math.max(1.25,M.topY*.38);clampIndoorCamera();
- document.querySelectorAll('[data-view],#outdoorBtn').forEach(el=>el.classList.toggle('active',el===b));
+ document.querySelectorAll('[data-view],#outdoorBtn').forEach(el=>{
+  const active=el.id==='outdoorBtn'?!s.indoor:el.dataset.view==='room'?s.indoor&&currentView==='room':el===b;
+  el.classList.toggle('active',active);
+ });
 };
 $('outdoorBtn').addEventListener('click',()=>setEnvironmentMode(false,'outdoor'));
 for(const suffix of ['', 'Num'])document.getElementById('poleHeight'+suffix).addEventListener(suffix?'change':'input',e=>{const h=Number(e.target.value);if(!Number.isFinite(h))return;s.poleHeight=clamp(h,1.5,s.indoor?3:1000);enforceLimit('L');reset();dirty=true;buildRoom()});
