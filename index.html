@@ -420,6 +420,32 @@ function addYashimaMesa(cx,cz){
  for(let i=0;i<count;i++)tri(center,top[(i+1)%count],top[i],'#748c62');
 }
 
+// Authentic PLATEAU geometry is used only after a validated JSON asset exists.
+// Until then the handmade landmarks remain visible; do not label them PLATEAU.
+const verifiedPlateauAssets={tower:null,skytree:null};
+function addVerifiedPlateau(id,cx,cz){
+ const model=verifiedPlateauAssets[id];
+ if(!model||model.source!=='PLATEAU'||model.landmark!==id||!Array.isArray(model.triangles)||model.triangles.length===0)return false;
+ const colors=id==='tower'?['#ed4a2c','#ecebea']:['#dbe5e8'];
+ for(const points of model.triangles){
+  if(!Array.isArray(points)||points.length!==9||!points.every(Number.isFinite))continue;
+  const h=(points[1]+points[4]+points[7])/3;
+  const col=id==='tower'?(h<125?colors[0]:h<225?colors[Math.min(3,Math.floor((h-125)/25))%2]:colors[0]):colors[0];
+  tri([cx+points[0],points[1],cz+points[2]],
+      [cx+points[3],points[4],cz+points[5]],
+      [cx+points[6],points[7],cz+points[8]],col);
+ }
+ return true;
+}
+function loadVerifiedPlateauModels(){
+ for(const [id,url] of [['tower','assets/plateau_tokyo_tower.json'],['skytree','assets/plateau_tokyo_skytree.json']]){
+  fetch(url).then(r=>r.ok?r.json():null).then(model=>{
+   if(!model||model.source!=='PLATEAU'||model.landmark!==id||!Array.isArray(model.triangles)||model.triangles.length<100)return;
+   verifiedPlateauAssets[id]=model;buildRoom();
+   console.info('PLATEAU source geometry loaded:',id,model.source_file);
+  }).catch(()=>{});
+ }
+}
 function buildRoom(){mesh=[];let floorY=-.018;
  const ceilingY=ROOM_CEILING_Y,roofExceeded=roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
 if(outdoorBackdrop){
@@ -428,8 +454,8 @@ if(outdoorBackdrop){
  // caused z-fighting and severe horizontal stripes when the camera pulled back.
  box(0,-.38,-1800,10000,.52,9000,'#8cab73');
  // Distant landmarks: researched silhouettes, kept separate from the classroom.
- addTokyoTower(-480,-1030);
- addTokyoSkytree(490,-1230);
+ if(!addVerifiedPlateau('tower',-480,-1030))addTokyoTower(-480,-1030);
+ if(!addVerifiedPlateau('skytree',490,-1230))addTokyoSkytree(490,-1230);
  // Yashima is represented as a long, flat-topped mesa in the Takamatsu landscape.
  addYashimaMesa(0,-2700);
  // light clouds at about 1000m, deliberately spaced away from instrument column
@@ -935,7 +961,7 @@ function drawGraph(){
 $('csv').onclick=()=>{if(!s.track.length){alert('開始して測定値を記録してください。');return}let lines=['time_s,angle1_deg,angle2_deg,angular_velocity1_deg_s,angular_velocity2_deg_s,x1_m,x2_m,total_energy_J'];for(let q of s.track)lines.push([q.t.toFixed(4),q.angle.toFixed(5),q.angle2.toFixed(5),q.velocity.toFixed(5),q.velocity2.toFixed(5),q.x.toFixed(5),q.x2.toFixed(5),q.energy.toFixed(6)].join(','));let u=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}));let a=document.createElement('a');a.href=u;a.download='pendulum_science_lab.csv';a.click();setTimeout(()=>URL.revokeObjectURL(u),2000)};
 let last=0,elapsed=0;function frame(t){requestAnimationFrame(frame);if(!gl&&t-last<55)return;let dt=Math.min(gl?.06:.32,Math.max(0,(t-last)/1000));last=t;if(s.playing){elapsed+=dt*playRate;let k=0;while(elapsed>=stepFrame&&k++<120){advanceFrame();elapsed-=stepFrame}}else elapsed=0;
 if(dirty)rebuildStatic();render();updateStats();drawGraph()}
-try{enforceLimit('L');refreshUnitTabs();buildRoom();rebuildStatic();readParams();reset();requestAnimationFrame(frame)}catch(err){$('webglError').style.display='block';$('webglError').textContent='3D描画の初期化に失敗しました: '+err.message;console.error(err)}
+try{enforceLimit('L');refreshUnitTabs();buildRoom();rebuildStatic();readParams();reset();loadVerifiedPlateauModels();requestAnimationFrame(frame)}catch(err){$('webglError').style.display='block';$('webglError').textContent='3D描画の初期化に失敗しました: '+err.message;console.error(err)}
 })();
 </script>
 </body></html>
