@@ -151,6 +151,10 @@ function drawTokyoTowerPhoto(vp){
  gl.activeTexture(gl.TEXTURE0);
  gl.bindTexture(gl.TEXTURE_2D,towerPhotoTexture);
  gl.bindBuffer(gl.ARRAY_BUFFER,towerPhotoBuf);
+ // Disable the legacy scene attributes while the 5-float textured buffer is bound.
+ gl.disableVertexAttribArray(pLoc);
+ gl.disableVertexAttribArray(nLoc);
+ gl.disableVertexAttribArray(cLoc);
  gl.enableVertexAttribArray(towerPhotoPos);
  gl.enableVertexAttribArray(towerPhotoUV);
  gl.vertexAttribPointer(towerPhotoPos,3,gl.FLOAT,false,20,0);
