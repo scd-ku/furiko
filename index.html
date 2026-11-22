@@ -100,8 +100,8 @@ precision highp float;
 in vec2 vTowerUV;uniform sampler2D uTowerPhoto;out vec4 outColor;
 void main(){outColor=vec4(texture(uTowerPhoto,vTowerUV).rgb,1.0);}`;
 let towerPhotoProgram=null,towerPhotoPos=-1,towerPhotoUV=-1,towerPhotoVP=null,towerPhotoSampler=null;
-const towerPhotoBuf=gl?gl.createBuffer():null;
-let towerPhotoTexture=null,towerPhotoCount=0;
+const landmarkPhotos={tower:null,skytree:null};
+const landmarkPositions={tower:[-480,-1030],skytree:[490,-1230]};
 if(gl){
  towerPhotoProgram=gl.createProgram();
  gl.attachShader(towerPhotoProgram,shader(gl.VERTEX_SHADER,towerPhotoVS));
@@ -114,20 +114,19 @@ if(gl){
  towerPhotoVP=gl.getUniformLocation(towerPhotoProgram,'uTowerVP');
  towerPhotoSampler=gl.getUniformLocation(towerPhotoProgram,'uTowerPhoto');
 }
-function uploadTokyoTowerPhoto(model,image){
+function uploadLandmarkPhoto(id,model,image){
  if(!gl||!model._vertices||!model._faces||!model._uv)return;
+ const coords=landmarkPositions[id];if(!coords)throw Error('Unknown landmark id: '+id);
  const faces=model._faces,uv=model._uv,vertices=model._vertices;
- if(uv.length!==faces.length*2)throw Error('The PLATEAU photo UV count is inconsistent');
- const out=new Float32Array(faces.length*5),centerX=-480,centerZ=-1030;
+ if(uv.length!==faces.length*2)throw Error('PLATEAU photo UV mismatch for '+id);
+ const out=new Float32Array(faces.length*5),centerX=coords[0],centerZ=coords[1];
  for(let i=0;i<faces.length;i++){
   const p=vertices[faces[i]],at=i*5;
   out[at]=p[0]+centerX;out[at+1]=p[1];out[at+2]=p[2]+centerZ;
   out[at+3]=uv[2*i];out[at+4]=uv[2*i+1];
  }
  const tex=gl.createTexture();
- gl.activeTexture(gl.TEXTURE0);
- gl.bindTexture(gl.TEXTURE_2D,tex);
- // OBJ UVs are bottom-left oriented; browser image pixels are top-left.
+ gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tex);
  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);
@@ -138,30 +137,28 @@ function uploadTokyoTowerPhoto(model,image){
  gl.generateMipmap(gl.TEXTURE_2D);
  const err=gl.getError();
  if(err!==gl.NO_ERROR){gl.deleteTexture(tex);throw Error('Texture upload error '+err);}
- gl.bindBuffer(gl.ARRAY_BUFFER,towerPhotoBuf);
- gl.bufferData(gl.ARRAY_BUFFER,out,gl.STATIC_DRAW);
- if(towerPhotoTexture)gl.deleteTexture(towerPhotoTexture);
- towerPhotoTexture=tex;towerPhotoCount=faces.length;
+ const buffer=gl.createBuffer();
+ gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,out,gl.STATIC_DRAW);
+ const old=landmarkPhotos[id];
+ if(old){gl.deleteTexture(old.texture);gl.deleteBuffer(old.buffer)}
+ landmarkPhotos[id]={texture:tex,buffer,count:faces.length};
 }
-function drawTokyoTowerPhoto(vp){
- if(!gl||!towerPhotoTexture||!towerPhotoCount)return;
+function drawLandmarkPhotos(vp){
+ if(!gl||(!landmarkPhotos.tower&&!landmarkPhotos.skytree))return;
  gl.useProgram(towerPhotoProgram);
  gl.uniformMatrix4fv(towerPhotoVP,false,new Float32Array(vp));
  gl.uniform1i(towerPhotoSampler,0);
- gl.activeTexture(gl.TEXTURE0);
- gl.bindTexture(gl.TEXTURE_2D,towerPhotoTexture);
- gl.bindBuffer(gl.ARRAY_BUFFER,towerPhotoBuf);
- // Disable the legacy scene attributes while the 5-float textured buffer is bound.
- gl.disableVertexAttribArray(pLoc);
- gl.disableVertexAttribArray(nLoc);
- gl.disableVertexAttribArray(cLoc);
- gl.enableVertexAttribArray(towerPhotoPos);
- gl.enableVertexAttribArray(towerPhotoUV);
- gl.vertexAttribPointer(towerPhotoPos,3,gl.FLOAT,false,20,0);
- gl.vertexAttribPointer(towerPhotoUV,2,gl.FLOAT,false,20,12);
- gl.drawArrays(gl.TRIANGLES,0,towerPhotoCount);
- gl.disableVertexAttribArray(towerPhotoPos);
- gl.disableVertexAttribArray(towerPhotoUV);
+ gl.disableVertexAttribArray(pLoc);gl.disableVertexAttribArray(nLoc);gl.disableVertexAttribArray(cLoc);
+ gl.enableVertexAttribArray(towerPhotoPos);gl.enableVertexAttribArray(towerPhotoUV);
+ for(const id of ['tower','skytree']){
+  const item=landmarkPhotos[id];if(!item)continue;
+  gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,item.texture);
+  gl.bindBuffer(gl.ARRAY_BUFFER,item.buffer);
+  gl.vertexAttribPointer(towerPhotoPos,3,gl.FLOAT,false,20,0);
+  gl.vertexAttribPointer(towerPhotoUV,2,gl.FLOAT,false,20,12);
+  gl.drawArrays(gl.TRIANGLES,0,item.count);
+ }
+ gl.disableVertexAttribArray(towerPhotoPos);gl.disableVertexAttribArray(towerPhotoUV);
  gl.useProgram(prog);
 }
 
@@ -533,7 +530,7 @@ function unpackVerifiedPlateau(model){
 function addVerifiedPlateau(id,cx,cz){
  const m=verifiedPlateauAssets[id];
  if(!m||m.source!=='PLATEAU'||m.landmark!==id)return false;
- if(id==='tower'&&gl&&towerPhotoTexture&&towerPhotoCount>0)return true;
+ if(gl&&landmarkPhotos[id]?.count>0)return true;
  const colorFor=h=>id==='tower'
   ? h<125?'#e84c2d':h<225?(Math.min(3,Math.floor((h-125)/25))%2===0?'#e84c2d':'#e9e7e4'):'#ed4a2c'
   :'#dbe5e8';
@@ -555,11 +552,11 @@ function loadVerifiedPlateauModels(){
   fetch(url).then(r=>r.ok?r.json():null).then(model=>{
    if(!model||model.source!=='PLATEAU'||model.landmark!==id||!unpackVerifiedPlateau(model))return;
    verifiedPlateauAssets[id]=model;buildRoom();
-   if(id==='tower'&&gl&&model._uv&&model.photographic_texture){
+   if(gl&&model._uv&&model.photographic_texture){
     const image=new Image();
     image.onload=()=>{
      try{
-      uploadTokyoTowerPhoto(model,image);
+      uploadLandmarkPhoto(id,model,image);
       // Remove the colored fallback mesh after photographic texture is ready.
       buildRoom();
       console.info('PLATEAU photographic texture enabled',model.texture_source);
@@ -799,7 +796,7 @@ function renderMiniViewport(w,h){
  gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,vw,vh);gl.viewport(x,y,vw,vh);
  gl.clearColor(1,1,1,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
  gl.uniformMatrix4fv(vpLoc,false,new Float32Array(miniVP));
- drawBuffer(roomBuf,roomCount);drawTokyoTowerPhoto(miniVP);drawBuffer(staticBuf,staticCount);drawBuffer(dynamicBuf,dynamicCount);
+ drawBuffer(roomBuf,roomCount);drawLandmarkPhotos(miniVP);drawBuffer(staticBuf,staticCount);drawBuffer(dynamicBuf,dynamicCount);
  gl.disable(gl.SCISSOR_TEST);gl.viewport(0,0,w,h);
 }
 
@@ -903,7 +900,7 @@ let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*M
  const nearPlane=Math.max(.08,Math.min(50,camera.dist*.02));
  const farPlane=Math.max(4000,Math.min(12000,camera.dist*3+1800));
  let proj=perspective(48*RAD,w/h,nearPlane,farPlane),view=lookAt(eye,target,[0,1,0]);lastVP=matrixMul(proj,view);
-const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room){drawBuffer(roomBuf,roomCount);if(outside)drawTokyoTowerPhoto(lastVP);}drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
+const outside=showOutdoorBackdrop(); if(gl){gl.viewport(0,0,w,h);gl.clearColor(outside?.60:1.0,outside?.80:1.0,outside?.98:1.0,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.uniformMatrix4fv(vpLoc,false,new Float32Array(lastVP));if(s.room){drawBuffer(roomBuf,roomCount);if(outside)drawLandmarkPhotos(lastVP);}drawBuffer(staticBuf,staticCount);rebuildDynamic();drawBuffer(dynamicBuf,dynamicCount);renderMiniViewport(w,h)}
 else{rebuildDynamic();renderSoftware(w,h);miniFrame.hidden=!(roomNeedsOpenSky()&&s.room);miniFallback.style.display='none'}drawLabels();drawVelocityOverlay();drawPlotterTimeLabels()}
 function renderSoftware(w,h){const ctx=canvas2d;
  const img=ctx.createImageData(w,h),pixels=img.data,depthBuf=new Float32Array(w*h);
