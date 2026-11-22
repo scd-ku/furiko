@@ -50,7 +50,7 @@
 </aside>
 <section class="stage"><div id="miniFrame" class="mini-frame" hidden><canvas id="miniFallback" style="width:100%;height:100%;display:none"></canvas><span>実験台｜初期視点</span></div><canvas id="gl" aria-label="3D理科室の振り子実験"></canvas><canvas id="labels" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none"></canvas><div id="webglError" class="error">このブラウザでは3D描画が使えません。Chrome または Safari の WebGL 対応環境で開いてください。</div>
 <div class="stageOverlay upperLeft"><b id="sceneTitle">理科室｜対面型実験台</b><small id="sceneSubtitle">振り子・理科室は学習用の3Dモデルです</small></div>
-<div class="viewbuttons"><button type="button" id="fullscreenBtn" title="振り子画面を全画面表示">⛶ 全画面</button><button data-view="front" class="active">正面</button><button data-view="diagonal">斜め</button><button data-view="top">俯瞰</button><button data-view="room">理科室</button><button type="button" id="heightViewBtn" title="2つの塔・屋島・東大寺大仏と高さ定規を一画面で比較">高さ比較</button><button type="button" id="buddhaViewBtn" title="東大寺大仏（学習用概形モデル）を拡大表示">大仏</button><button type="button" data-projection="perspective" class="active" title="遠くほど小さく見える透視投影">1点透視</button><button type="button" data-projection="orthographic" title="奥行きによって縮小しない平行投影">平行投影</button></div>
+<div class="viewbuttons"><button type="button" id="fullscreenBtn" title="振り子画面を全画面表示">⛶ 全画面</button><button data-view="front" class="active">正面</button><button data-view="diagonal">斜め</button><button data-view="top">俯瞰</button><button data-view="room">理科室</button><button type="button" id="heightViewBtn" title="2つの塔・屋島と高さ定規を一画面で比較">高さ比較</button><button type="button" data-projection="perspective" class="active" title="遠くほど小さく見える透視投影">1点透視</button><button type="button" data-projection="orthographic" title="奥行きによって縮小しない平行投影">平行投影</button></div>
 <div class="transportBar" role="group" aria-label="振り子の再生操作">
 <button id="start" class="act primary" type="button">▶ 開始</button>
 <button id="stepBack" class="act" type="button" title="1/60秒戻す">◀ コマ戻り</button>
@@ -105,7 +105,6 @@ const landmarkPhotos={tower:null,skytree:null};
 const LANDMARK_LAYOUT={
  tower:{x:-520,z:-240,height:333.447},
  skytree:{x:540,z:-240,height:634},
- daibutsu:{x:90,z:-120,height:18.03,statueHeight:14.98,pedestalHeight:3.05},
  ruler:{x:-710,z:-240,height:700},
  yashima:{x:0,z:-2700,height:292.07}
 };
@@ -580,93 +579,8 @@ function loadVerifiedPlateauModels(){
 // Real-world heights, in metres. The ruler is left of Tokyo Tower and
 // connected horizontally to each summit by dashed 3D cylinders.
 
-/* Tōdai-ji Vairocana Great Buddha, an educational, approximate 3D silhouette.
-   Dimensions from Tōdai-ji official site: seated statue 14.98 m and pedestal
-   3.05 m; including pedestal 18.03 m. Not a laser-scanned heritage model. */
-function addTodaijiDaibutsu(cx,cz){
- const bronze='#46564c',deep='#303d38',shade='#56635a',highlight='#627267',gold='#80714c';
- function oval(x,y,z,rx,ry,rz,col,lat=12,lon=20){
-  for(let i=0;i<lat;i++){
-   const a=i*PI/lat,b=(i+1)*PI/lat;
-   for(let j=0;j<lon;j++){
-    const u=j*2*PI/lon,v=(j+1)*2*PI/lon;
-    const p=(t,s)=>[cx+x+rx*Math.sin(t)*Math.cos(s),
-      y+ry*Math.cos(t),cz+z+rz*Math.sin(t)*Math.sin(s)];
-    quad(p(a,u),p(b,u),p(b,v),p(a,v),col);
-   }
-  }
- }
- // Bronze lotus plinth, exactly 3.05 m tall; the ground is y=0.
- lathe([cx,0,cz],[
-  [0,4.35],[.25,4.62],[.45,4.52],[.95,4.90],[1.55,4.82],
-  [2.0,4.42],[2.5,4.25],[2.90,4.50],[3.05,4.38]],gold);
- for(let i=0;i<28;i++){
-  const a=(i+.5)*2*PI/28,da=2*PI/28*.53;
-  const p=(r,y,t)=>[cx+r*Math.sin(t),y,cz+r*Math.cos(t)];
-  quad(p(4.40,1.00,a-da),p(4.40,1.00,a+da),
-       p(4.68,2.18,a+da*.25),p(4.68,2.18,a-da*.25),highlight);
- }
- // Cross-legged seated lower half and broad robe spread across the knees.
- oval(0,5.5,-.12,5.18,2.4,3.48,shade,15,24);
- oval(-2.62,5.4,.6,2.72,1.20,2.42,bronze,12,18);
- oval(2.62,5.4,.6,2.72,1.20,2.42,bronze,12,18);
- // Upright torso, broad shoulders; upper robe forms diagonal folds.
- oval(0,9.05,-.35,3.72,3.7,2.54,bronze,18,24);
- for(let i=0;i<7;i++){
-  const a=-2.4+i*.71;
-  const p0=[cx+a,10.95,cz+1.35],p1=[cx+a*.80+.50,7.45,cz+2.24];
-  line(p0,p1,.10,deep);
- }
- // Collar, neck and the large oval face: face height ~5.3m.
- oval(0,11.6,.24,1.30,1.30,1.30,shade,14,18);
- oval(0,14.00,.67,2.14,2.66,1.72,shade,22,32);
- // Ears and long earlobes.
- oval(-2.10,13.45,.63,.40,1.17,.56,bronze,12,12);
- oval( 2.10,13.45,.63,.40,1.17,.56,bronze,12,12);
- // Half-closed eyes, shallow brows and a softly modelled nose.
- for(const side of [-1,1]){
-  oval(side*.84,14.52,2.22,.55,.10,.13,deep,6,12);
-  line([cx+side*.30,14.71,cz+2.22],[cx+side*1.31,14.66,cz+1.95],.095,bronze);
- }
- oval(0,13.90,2.43,.37,.70,.31,highlight,12,12);
- oval(0,12.91,2.29,.70,.10,.17,deep,6,12);
- ball([cx,15.24,cz+2.30],.16,'#b8b2a1',9,12); // urna
- // Tight bronze curls cover the crown; finial stays within y=18.03m.
- for(let ring=0;ring<4;ring++){
-  const y=15.75+ring*.38,r=1.75-ring*.34,count=22-ring*4;
-  for(let j=0;j<count;j++){
-   const a=j*2*PI/count;
-   ball([cx+r*Math.cos(a),y,cz+.64+r*.72*Math.sin(a)],.20,deep,5,7);
-  }
- }
- oval(0,16.77,.55,1.10,1.22,1.04,deep,10,14);
- ball([cx,17.93,cz+.55],.10,deep,5,8); // crest: y=18.03
- // Right arm (on viewer's left): raised open palm in abhaya mudra.
- oval(-3.20,10.45,.15,1.35,1.25,1.24,bronze,10,16);
- cyl([cx-3.35,10.50,cz+.22],[cx-4.35,10.60,cz+1.14],.78,bronze,12,.65);
- cyl([cx-4.35,10.60,cz+1.14],[cx-4.35,12.42,cz+1.48],.63,shade,12,.49);
- oval(-4.36,13.14,1.63,.74,1.06,.31,bronze,12,16);
- for(let i=0;i<4;i++){
-  const fx=-4.85+i*.32,base=13.70+Math.sin(i/3*PI)*.12;
-  cyl([cx+fx,base,cz+1.61],[cx+fx+.06,base+.84+(i===1?.2:0),cz+1.60],
-      .12,shade,9,.082);
- }
- cyl([cx-3.82,12.77,cz+1.55],[cx-3.57,13.32,cz+1.65],.19,shade,9,.12);
- // Left arm is lowered; the open left hand rests in the lap, palm up.
- oval(3.12,10.00,.04,1.18,1.16,1.10,shade,12,16);
- cyl([cx+3.25,9.57,cz+.47],[cx+3.64,7.10,cz+1.12],.71,bronze,12,.52);
- oval(2.85,6.30,2.38,1.06,.39,.78,highlight,12,18);
- for(let i=0;i<4;i++){
-  const fx=2.07+i*.49;
-  line([cx+fx,6.30,cz+2.69],[cx+fx+.16,6.34,cz+3.14],.11,bronze);
- }
- // A muted front sash and lotus seat rim clarify the statue's seated pose.
- line([cx-4.65,4.25,cz+2.15],[cx+4.65,4.25,cz+2.15],.14,deep);
-}
-
 const HEIGHT_REFERENCES=[
  {id:'tower',label:'東京タワー',height:333.447,heightLabel:'333 m',color:'#d65a42'},
- {id:'daibutsu',label:'東大寺大仏（台座込み）',height:18.03,heightLabel:'18.03 m',color:'#936e40'},
  {id:'yashima',label:'屋島・南嶺',height:292.07,heightLabel:'292.07 m',color:'#3c7b58'},
  {id:'skytree',label:'東京スカイツリー',height:634,heightLabel:'634 m',color:'#3269a6'}
 ];
@@ -705,18 +619,97 @@ function addHeightComparisonRuler(){
   const tip=summitPoint(item.id);
   const endpoint=[x,item.height,z];
   addDashedHeightGuide(tip,endpoint,item.color);
-  ball(tip,item.id==='daibutsu'?.22:2.0,item.color,8,10);
-  ball(endpoint,item.id==='daibutsu'?.28:2.15,item.color,8,10);
+  ball(tip,2.0,item.color,8,10);
+  ball(endpoint,2.15,item.color,8,10);
+ }
+}
+
+// A deliberately fictional city, not a surveyed PLATEAU urban model.
+// Repeating non-overlapping ground tiles cover the entire camera range.
+function addVirtualCity(){
+ const tile=3600;
+ const groundColors=['#a7b5a7','#aab8ac','#acb9ad','#a7b4aa','#a8b7a8'];
+ for(let ix=-12;ix<12;ix++)for(let iz=-12;iz<12;iz++){
+  const x0=ix*tile,z0=iz*tile,x1=x0+tile,z1=z0+tile;
+  const color=groundColors[Math.abs((ix*31+iz*17)%groundColors.length)];
+  quad([x0,-.12,z0],[x0,-.12,z1],[x1,-.12,z1],[x1,-.12,z0],color);
+ }
+ const road='#6f7c81',avenue='#5a6d76',walk='#bec4bd';
+ // Stagger road-plane heights at intersections so no coplanar surfaces fight.
+ for(let x=-2340;x<=2340;x+=195){
+  box(x,-.079,0,24,.052,3930,Math.abs(x)<24?avenue:road);
+  box(x-16,-.079,0,4,.054,3930,walk);
+  box(x+16,-.079,0,4,.054,3930,walk);
+ }
+ for(let z=-1755;z<=1755;z+=195){
+  box(0,-.061,z,4790,.055,27,Math.abs(z)<20?avenue:road);
+ }
+ const facades=['#c6c6ba','#cdd6d4','#bac6cd','#c9b9aa','#e0d7c9',
+                '#9daeb7','#ddd9cb','#b4bdb1','#b8b3a7'];
+ const windows=['#667d89','#778f99','#4f7183','#526b73'];
+ function hash(a,b,k){let n=(a*92821+b*68917+k*11939)|0;n^=n<<13;n^=n>>>17;n^=n<<5;return(n>>>0)/4294967295;}
+ const parking='#adb0a8',park='#87a58b',path='#bbc3ae';
+ for(let ix=-11;ix<=11;ix++)for(let iz=-8;iz<=8;iz++){
+  const x=ix*195+97.5,z=iz*195+97.5;
+  if(Math.hypot(x,z)<165)continue;
+  if(Math.hypot(x-LANDMARK_LAYOUT.tower.x,z-LANDMARK_LAYOUT.tower.z)<128)continue;
+  if(Math.hypot(x-LANDMARK_LAYOUT.skytree.x,z-LANDMARK_LAYOUT.skytree.z)<128)continue;
+  if(Math.hypot(x-LANDMARK_LAYOUT.ruler.x,z-LANDMARK_LAYOUT.ruler.z)<48)continue;
+  const seed=hash(ix,iz,2),r=hash(ix,iz,6);
+  if(seed<.19){
+   box(x,-.036,z,148,.055,148,park);
+   box(x,-.007,z,3.1,.015,148,path);
+   box(x,-.007,z,148,.015,3.1,path);
+   for(const [dx,dz] of [[-42,-37],[39,34],[-40,43],[45,-43]]){
+    const h=5+hash(ix+dx,iz+dz,3)*3.2;
+    cyl([x+dx,.05,z+dz],[x+dx,h*.48,z+dz],.56,'#5e6758',6);
+    ball([x+dx,h*.78,z+dz],h*.36,'#63886c',6,9);
+   }
+   continue;
+  }
+  if(seed<.27){
+   box(x,-.039,z,145,.04,142,parking);
+   for(let q=-3;q<=3;q++)box(x+q*19,-.012,z,1.6,.013,117,'#ecede5');
+   continue;
+  }
+  const neighborhood=Math.abs(ix)<5&&iz>-4&&iz<5;
+  const maxHeight=neighborhood?68:130;
+  const baseH=(neighborhood?10:16)+(r*r)*maxHeight;
+  const frontage=92+hash(ix,iz,12)*46,depth=95+hash(ix,iz,14)*42;
+  const col=facades[Math.floor(hash(ix,iz,4)*facades.length)];
+  const glass=windows[Math.floor(hash(ix,iz,5)*windows.length)];
+  box(x,baseH*.5-.055,z,frontage,baseH,depth,col);
+  box(x,baseH+.4,z,frontage*.83,.72,depth*.84,'#8d999a');
+  if(baseH>22){
+   for(const side of [-1,1]){
+    box(x,baseH*.55,z+side*(depth/2+.015),frontage*.84,baseH*.53,.06,glass);
+    for(let q=-2;q<=2;q++)
+     box(x+q*frontage*.15,baseH*.55,z+side*(depth/2+.056),.5,baseH*.53,.05,col);
+    for(let q=1;q<=4;q++){
+     const y=baseH*.28+q*baseH*.095;
+     box(x,y,z+side*(depth/2+.061),frontage*.84,.27,.05,'#c5c6c0');
+    }
+   }
+  }
+  if(hash(ix,iz,3)>.53){
+   const annexH=Math.max(5,baseH*.28),annexX=x+frontage*.43;
+   box(annexX,annexH*.5-.04,z-depth*.16,frontage*.31,annexH,depth*.4,
+    facades[(Math.floor(seed*facades.length)+3)%facades.length]);
+  }
+ }
+ for(let iz=-6;iz<=6;iz+=2){
+  for(let ix=-8;ix<=8;ix+=4){
+   const x=ix*195,z=iz*195;
+   for(let q=-2;q<=2;q++)box(x+q*4,-.027,z+26,2.7,.012,13,'#e1dfd4');
+  }
  }
 }
 
 function buildRoom(){mesh=[];let floorY=-.018;
  const ceilingY=ROOM_CEILING_Y,roofExceeded=roomNeedsOpenSky(),outdoorBackdrop=showOutdoorBackdrop();
 if(outdoorBackdrop){
- // broad green terrain around the school, horizon visible above the classroom
- // A single non-overlapping terrain surface. Repeated coplanar grass patches
- // caused z-fighting and severe horizontal stripes when the camera pulled back.
- box(0,-.38,-1800,10000,.52,9000,'#8cab73');
+ // Tile-based terrain and fictional neighborhoods continue past the horizon.
+ addVirtualCity();
  // Distant landmarks: researched silhouettes, kept separate from the classroom.
  if(!addVerifiedPlateau('tower',LANDMARK_LAYOUT.tower.x,LANDMARK_LAYOUT.tower.z))
   addTokyoTower(LANDMARK_LAYOUT.tower.x,LANDMARK_LAYOUT.tower.z);
@@ -724,7 +717,6 @@ if(outdoorBackdrop){
   addTokyoSkytree(LANDMARK_LAYOUT.skytree.x,LANDMARK_LAYOUT.skytree.z);
  // The classroom at x=0 sits between both towers; Yashima remains behind them.
  addYashimaMesa(LANDMARK_LAYOUT.yashima.x,LANDMARK_LAYOUT.yashima.z);
- addTodaijiDaibutsu(LANDMARK_LAYOUT.daibutsu.x,LANDMARK_LAYOUT.daibutsu.z);
  addHeightComparisonRuler();
  // light clouds at about 1000m, deliberately spaced away from instrument column
  for(let k=0;k<7;k++){const cx=-750+k*245,cz=-440-(k%3)*240,cy=960+(k%4)*35;
@@ -1009,7 +1001,7 @@ function drawHeightComparisonLabels(){
  for(const item of HEIGHT_REFERENCES){
   const p=at([x,item.height,z+4]);
   if(p)paint(item.label+'  '+item.heightLabel,
-             [p[0]+9,p[1]-(item.id==='daibutsu'?16:11)],item.color,13,800);
+             [p[0]+9,p[1]-11],item.color,13,800);
  }
  // Explicitly identify the tiny classroom at the true common 1:1 height scale.
  if(camera.dist>120){
@@ -1082,6 +1074,7 @@ function drawPlotterTimeLabels(){
  ctx.restore();
 }
 function render(){const [w,h]=resize(glCanvas);if(!w||!h)return;
+clampIndoorCamera();
 let target=[camera.tx,camera.ty,camera.tz],eye=[camera.tx+Math.sin(camera.yaw)*Math.cos(camera.pitch)*camera.dist,camera.ty+Math.sin(camera.pitch)*camera.dist,camera.tz+Math.cos(camera.yaw)*Math.cos(camera.pitch)*camera.dist];// Increase the near plane in proportion to view distance. A fixed 0.04–4000 m
  // frustum loses depth-buffer precision at ground level in distant views.
  const nearPlane=Math.max(.08,Math.min(50,camera.dist*.02));
@@ -1149,12 +1142,12 @@ function enforceLimit(which){
 }
 function updateSceneTitle(){
  const outside=roomNeedsOpenSky();
- $('sceneTitle').textContent=outside?'屋外｜草原と青空':'理科室｜対面型実験台';
+ $('sceneTitle').textContent=outside?'屋外｜仮想の街と高さ比較':'理科室｜対面型実験台';
  $('sceneSubtitle').textContent=outside
   ?'実験器の最上部が天井高3mを超えたため、屋外の風景を表示しています'
   :s.indoor
    ?'屋内モード｜支柱の高さ上限3m・視点を理科室内に制限'
-   :'理科室は維持したまま周囲の草原と青空を表示します。支柱が天井を超えると屋外の風景に切り替わります';
+   :'理科室は維持したまま周囲の仮想の街を表示します。支柱が天井を超えると屋外の風景に切り替わります';
 }
 function updateIndoor(){
  // The checkbox changes the height cap and camera restriction, not the room itself.
@@ -1200,21 +1193,7 @@ $('heightViewBtn').addEventListener('click',()=>{
  currentView='height';
  document.querySelectorAll('[data-view]').forEach(el=>el.classList.remove('active'));
  $('heightViewBtn').classList.add('active');
- $('buddhaViewBtn').classList.remove('active');
  updateSceneTitle();
-});
-$('buddhaViewBtn').addEventListener('click',()=>{
- // Orthographic/perspective mode is left unchanged; this is a camera preset.
- if(s.indoor){s.indoor=false;$('indoorMode').checked=false;persistActive();buildRoom();}
- const p=LANDMARK_LAYOUT.daibutsu;
- camera.yaw=0;camera.pitch=.065;camera.tx=p.x;camera.ty=9.1;camera.tz=p.z;
- camera.dist=52;
- currentView='buddha';
- document.querySelectorAll('[data-view]').forEach(el=>el.classList.remove('active'));
- $('heightViewBtn').classList.remove('active');
- $('buddhaViewBtn').classList.add('active');
- $('sceneTitle').textContent='東大寺大仏｜盧舎那仏坐像';
- $('sceneSubtitle').textContent='学習用概形モデル：像高14.98m・台座3.05m（東大寺公式）／実測形状ではありません';
 });
 for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{
  const v=presets[b.dataset.view],M=apparatusMetrics();currentView=b.dataset.view;
@@ -1225,7 +1204,6 @@ for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>{
  clampIndoorCamera();
  document.querySelectorAll('[data-view]').forEach(el=>el.classList.toggle('active',el===b));
  $('heightViewBtn').classList.remove('active');
- $('buddhaViewBtn').classList.remove('active');
  updateSceneTitle();
 };
 for(const suffix of ['', 'Num'])document.getElementById('poleHeight'+suffix).addEventListener(suffix?'change':'input',e=>{const h=Number(e.target.value);if(!Number.isFinite(h))return;s.poleHeight=clamp(h,1.5,s.indoor?3:1000);enforceLimit('L');reset();dirty=true;buildRoom()});
@@ -1263,11 +1241,19 @@ function pointerPolar(e,center){
  return {angle:Math.atan2(h,v)/RAD,length:Math.hypot(h,v)};
 }
 function clampIndoorCamera(){
- if(!s.indoor)return;
- // Keep the observer and orbit within the classroom only in indoor mode.
- camera.tx=clamp(camera.tx,-2.9,2.9);camera.tz=clamp(camera.tz,-3.0,2.6);
- camera.ty=clamp(camera.ty,.75,2.35);camera.pitch=clamp(camera.pitch,-.26,.46);
- camera.yaw=clamp(camera.yaw,-1.60,1.60);camera.dist=clamp(camera.dist,.65,5.6);
+ if(s.indoor){
+  camera.tx=clamp(camera.tx,-2.9,2.9);camera.tz=clamp(camera.tz,-3.0,2.6);
+  camera.ty=clamp(camera.ty,.75,2.35);camera.pitch=clamp(camera.pitch,-.26,.46);
+  camera.yaw=clamp(camera.yaw,-1.60,1.60);camera.dist=clamp(camera.dist,.65,5.6);
+  return;
+ }
+ // For every outdoor drag, zoom and camera preset: keep both the orbit target
+ // and the actual camera eye above the ground, never viewing from underneath.
+ camera.tx=clamp(camera.tx,-10000,10000);camera.tz=clamp(camera.tz,-10000,10000);
+ camera.ty=clamp(camera.ty,.85,5000);camera.dist=clamp(camera.dist,.55,8000);
+ const clearance=1.4;
+ const minPitch=Math.asin(clamp((clearance-camera.ty)/camera.dist,-.99,.99));
+ camera.pitch=clamp(Math.max(camera.pitch,minPitch+.001),-.39,1.45);
 }
 function allBobTargets(){const targets=[];for(let i=0;i<unitStates.length;i++){const q=i===activeUnit?s:unitStates[i],x=unitOffset(i),h=apparatusPivotHeight(q);const px=x,py=h,pz=pivot[2]+.016;const x1=px+q.L*Math.sin(q.theta),y1=py-q.L*Math.cos(q.theta);targets.push({unit:i,bob:1,pos:[x1,y1,pz]});if(q.second)targets.push({unit:i,bob:2,pos:[x1+q.L2*Math.sin(q.theta2),y1-q.L2*Math.cos(q.theta2),pz]})}return targets}
 function apparatusPivotHeight(q){const r=Math.max(.023,Math.min(.076,.038*Math.cbrt(q.m/200))),r2=Math.max(.023,Math.min(.076,.038*Math.cbrt(q.m2/200)));const ext=Math.min((s.indoor?3:1000)-.76-.684,Math.max(0,q.L+(q.second?q.L2:0)-.60,(q.L+(q.second?q.L2+Math.max(r,r2):r)+.09)-.605,q.poleHeight-.76-.684));return .76+.605+ext}
