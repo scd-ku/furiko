@@ -262,11 +262,11 @@ function addYashimaMesa(cx,cz){
   const outer=meshes[r],inner=meshes[r+1],col=colors[r];
   for(let i=0;i<count;i++){
    const j=(i+1)%count;
-   quad(outer[i],outer[j],inner[j],inner[i],col);
+   quad(outer[i],inner[i],inner[j],outer[j],col);
   }
  }
  const top=meshes[meshes.length-1],center=[cx,287,cz];
- for(let i=0;i<count;i++)tri(center,top[i],top[(i+1)%count],'#748c62');
+ for(let i=0;i<count;i++)tri(center,top[(i+1)%count],top[i],'#748c62');
 }
 
 function buildRoom(){mesh=[];let floorY=-.018;
